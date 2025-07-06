@@ -83,11 +83,8 @@ app.use(config.api.swaggerPath, swaggerUi.serve, swaggerUi.setup(apiDefinition, 
   customSiteTitle: 'API Documentation'
 }));
 
-// API Routes
+// API Routes (OpenAPI compliant)
 app.use(config.api.basePath, routes);
-
-// For root level routes (backward compatibility)
-app.use('/', routes);
 
 // 404 handler for API routes
 app.use('/api/*', (req, res) => {

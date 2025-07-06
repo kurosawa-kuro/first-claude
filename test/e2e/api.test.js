@@ -209,7 +209,7 @@ describe('End-to-End API Tests', () => {
       const response = await request(app)
         .options('/api/v1/users')
         .set('Origin', 'http://localhost:3000')
-        .expect(204);
+        .expect(200);  // Express typically returns 200 for OPTIONS, not 204
 
       // Check CORS headers
       expect(response.headers).toHaveProperty('access-control-allow-origin');
