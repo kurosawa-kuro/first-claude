@@ -1,6 +1,6 @@
 import { UserArraySchema, UserQueryParamsSchema, UserParamsSchema, UserListResponseSchema, UserDetailResponseSchema } from '../schemas/user.js';
 import { getUsersFromDB, getUserByIdFromDB } from '../services/userService.js';
-import { getMicropostsByUserId } from '../services/micropostService.js';
+import { getMicropostCountByUserId, getMicropostsByUserId } from '../services/micropostService.js';
 import { handleAsyncError, ValidationError, NotFoundError } from '../utils/errors.js';
 
 export const getUsers = handleAsyncError(async (req, res) => {
@@ -38,7 +38,7 @@ export const getUsers = handleAsyncError(async (req, res) => {
   // Add micropost counts to users
   const usersWithCounts = paginatedUsers.map(user => ({
     ...user,
-    micropostCount: getMicropostsByUserId(user.id).length
+    micropostCount: getMicropostCountByUserId(user.id)
   }));
   
   // Validate response data
@@ -79,7 +79,7 @@ export const getUserById = handleAsyncError(async (req, res) => {
   
   const userDetail = {
     ...user,
-    micropostCount: userMicroposts.length,
+    micropostCount: getMicropostCountByUserId(userId),
     recentMicroposts
   };
   

@@ -2,6 +2,7 @@ import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import micropostRepository from '../repositories/micropostRepository.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

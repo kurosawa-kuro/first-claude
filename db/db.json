@@ -69,6 +69,24 @@
       "userId": 3,
       "content": "Another micropost with great content",
       "createdAt": "2024-01-17T10:00:00Z"
+    },
+    {
+      "id": 5,
+      "userId": 3,
+      "content": "End-to-end test micropost according to OpenAPI specification",
+      "createdAt": "2025-07-06T10:13:36.088Z"
+    },
+    {
+      "id": 6,
+      "userId": 1,
+      "content": "This is a test micropost",
+      "createdAt": "2025-07-06T10:13:36.854Z"
+    },
+    {
+      "id": 7,
+      "userId": 1,
+      "content": "Test micropost content for OpenAPI validation",
+      "createdAt": "2025-07-06T10:13:40.009Z"
     }
   ]
 }
