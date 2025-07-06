@@ -166,45 +166,98 @@ export class JWTUtils {
   }
 
   /**
-   * リフレッシュトークンを生成（将来実装予定）
+   * リフレッシュトークンを生成
    * @param {Object} user - ユーザー情報
-   * @returns {Promise<string>} リフレッシュトークン
+   * @param {string} deviceInfo - デバイス情報（オプション）
+   * @returns {Promise<Object>} リフレッシュトークン情報
    */
-  async generateRefreshToken(user) {
-    // TODO: リフレッシュトークン実装
-    // 現在はアクセストークンのみサポート
-    throw new Error('Refresh token not implemented yet');
+  async generateRefreshToken(user, deviceInfo = null) {
+    try {
+      const refreshTokenRepository = (await import('../repositories/refreshTokenRepository.js')).default;
+      return await refreshTokenRepository.create(user.id, deviceInfo);
+    } catch (error) {
+      const refreshError = new Error('リフレッシュトークン生成に失敗しました');
+      refreshError.code = 'REFRESH_TOKEN_GENERATION_FAILED';
+      refreshError.originalError = error;
+      throw refreshError;
+    }
   }
 
   /**
-   * リフレッシュトークンを検証（将来実装予定）
+   * リフレッシュトークンを検証
    * @param {string} refreshToken - リフレッシュトークン
    * @returns {Promise<Object>} 検証結果
    */
   async verifyRefreshToken(refreshToken) {
-    // TODO: リフレッシュトークン検証実装
-    throw new Error('Refresh token verification not implemented yet');
+    try {
+      const refreshTokenRepository = (await import('../repositories/refreshTokenRepository.js')).default;
+      
+      const tokenData = await refreshTokenRepository.findByToken(refreshToken);
+      if (!tokenData) {
+        const invalidError = new Error('無効なリフレッシュトークンです');
+        invalidError.code = 'INVALID_REFRESH_TOKEN';
+        invalidError.status = 401;
+        throw invalidError;
+      }
+
+      // 最終使用日時を更新
+      await refreshTokenRepository.updateLastUsed(refreshToken);
+
+      return tokenData;
+    } catch (error) {
+      if (error.code) throw error;
+      
+      const verifyError = new Error('リフレッシュトークン検証に失敗しました');
+      verifyError.code = 'REFRESH_TOKEN_VERIFICATION_FAILED';
+      verifyError.status = 401;
+      verifyError.originalError = error;
+      throw verifyError;
+    }
   }
 
   /**
-   * トークンをブラックリストに追加（将来実装予定）
+   * トークンをブラックリストに追加
    * @param {string} token - JWTトークン
+   * @param {string} reason - ブラックリスト追加理由
    * @returns {Promise<void>}
    */
-  async blacklistToken(token) {
-    // TODO: トークンブラックリスト実装
-    // Redis等を使用してブラックリスト管理
-    throw new Error('Token blacklisting not implemented yet');
+  async blacklistToken(token, reason = 'logout') {
+    try {
+      const tokenBlacklistRepository = (await import('../repositories/tokenBlacklistRepository.js')).default;
+      
+      // トークンの有効期限を取得
+      let expiresAt = null;
+      try {
+        const decoded = jwt.decode(token.startsWith('Bearer ') ? token.slice(7) : token);
+        expiresAt = decoded?.exp || null;
+      } catch {
+        // デコードに失敗した場合は24時間後に設定
+        expiresAt = Math.floor(Date.now() / 1000) + (24 * 60 * 60);
+      }
+
+      await tokenBlacklistRepository.addToBlacklist(token, reason, expiresAt);
+    } catch (error) {
+      const blacklistError = new Error('トークンブラックリスト追加に失敗しました');
+      blacklistError.code = 'TOKEN_BLACKLIST_FAILED';
+      blacklistError.originalError = error;
+      throw blacklistError;
+    }
   }
 
   /**
-   * トークンがブラックリストにあるかチェック（将来実装予定）
+   * トークンがブラックリストにあるかチェック
    * @param {string} token - JWTトークン
    * @returns {Promise<boolean>} ブラックリストにあるかどうか
    */
   async isTokenBlacklisted(token) {
-    // TODO: ブラックリストチェック実装
-    return false;
+    try {
+      const tokenBlacklistRepository = (await import('../repositories/tokenBlacklistRepository.js')).default;
+      return await tokenBlacklistRepository.isBlacklisted(token);
+    } catch (error) {
+      // ブラックリストチェックでエラーが発生した場合は安全側に倒してtrueを返す
+      console.error('Blacklist check failed:', error);
+      return true;
+    }
   }
 
   /**

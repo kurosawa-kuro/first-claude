@@ -141,6 +141,42 @@
       "userId": 1,
       "content": "This is a test micropost",
       "createdAt": "2025-07-06T12:05:07.514Z"
+    },
+    {
+      "id": 17,
+      "userId": 1,
+      "content": "Test micropost content for OpenAPI validation",
+      "createdAt": "2025-07-06T12:11:34.677Z"
+    },
+    {
+      "id": 18,
+      "userId": 3,
+      "content": "End-to-end test micropost according to OpenAPI specification",
+      "createdAt": "2025-07-06T12:11:35.258Z"
+    },
+    {
+      "id": 19,
+      "userId": 1,
+      "content": "This is a test micropost",
+      "createdAt": "2025-07-06T12:11:36.022Z"
+    },
+    {
+      "id": 20,
+      "userId": 1,
+      "content": "Test micropost content for OpenAPI validation",
+      "createdAt": "2025-07-06T12:16:58.976Z"
+    },
+    {
+      "id": 21,
+      "userId": 3,
+      "content": "End-to-end test micropost according to OpenAPI specification",
+      "createdAt": "2025-07-06T12:16:59.528Z"
+    },
+    {
+      "id": 22,
+      "userId": 1,
+      "content": "This is a test micropost",
+      "createdAt": "2025-07-06T12:17:00.268Z"
     }
   ]
 }

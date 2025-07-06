@@ -56,7 +56,8 @@ export const authUserSchema = z.object({
 export const authTokensSchema = z.object({
   access_token: z.string().min(1),
   token_type: z.literal('Bearer'),
-  expires_in: z.number().int().positive()
+  expires_in: z.number().int().positive(),
+  refresh_token: z.string().min(1).optional()
 });
 
 // 認証レスポンススキーマ
@@ -117,10 +118,25 @@ export const authConfigSchema = z.object({
   lockoutDuration: z.number().int().positive().default(15 * 60) // 15分
 });
 
+// リフレッシュトークンリクエストスキーマ
+export const refreshTokenRequestSchema = z.object({
+  refresh_token: z.string().min(1, 'リフレッシュトークンが必要です')
+});
+
+// トークンブラックリストエントリスキーマ
+export const tokenBlacklistEntrySchema = z.object({
+  id: z.number().int().positive(),
+  tokenHash: z.string().min(1),
+  reason: z.string().min(1).default('logout'),
+  createdAt: z.string().datetime(),
+  expiresAt: z.number().int().positive()
+});
+
 // エクスポート用のデフォルト設定
 export const defaultAuthConfig = {
   jwtExpiresIn: 3600, // 1時間
   bcryptRounds: 12,
   maxLoginAttempts: 5,
-  lockoutDuration: 15 * 60 // 15分
+  lockoutDuration: 15 * 60, // 15分
+  refreshTokenExpiresIn: 30 * 24 * 60 * 60 // 30日
 };

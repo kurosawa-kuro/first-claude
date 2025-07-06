@@ -159,6 +159,10 @@ export class LocalAuthService extends BaseAuthService {
 
     // JWTトークン生成
     const tokens = await this.jwtUtils.generateTokens(authUser);
+    
+    // リフレッシュトークン生成
+    const refreshToken = await this.jwtUtils.generateRefreshToken(authUser);
+    tokens.refresh_token = refreshToken.token;
 
     return {
       user: authUser,
@@ -196,6 +200,10 @@ export class LocalAuthService extends BaseAuthService {
 
     // JWTトークン生成
     const tokens = await this.jwtUtils.generateTokens(authUser);
+    
+    // リフレッシュトークン生成
+    const refreshToken = await this.jwtUtils.generateRefreshToken(authUser);
+    tokens.refresh_token = refreshToken.token;
 
     return {
       user: authUser,
@@ -248,13 +256,71 @@ export class LocalAuthService extends BaseAuthService {
 
   /**
    * ログアウト処理
-   * 現在はJWTのステートレス性により実質的な処理なし
-   * 将来的にブラックリスト管理を実装予定
+   * トークンをブラックリストに追加
    */
   async logout(token) {
-    // TODO: トークンブラックリスト管理実装
-    // 現在はクライアント側でトークン削除に依存
-    return { success: true, message: 'ログアウトしました' };
+    try {
+      // トークンをブラックリストに追加
+      await this.jwtUtils.blacklistToken(token, 'logout');
+      return { success: true, message: 'ログアウトしました' };
+    } catch (error) {
+      // ログアウトエラーでもユーザーには成功を返す（セキュリティ上の理由）
+      console.error('Logout error:', error);
+      return { success: true, message: 'ログアウトしました' };
+    }
+  }
+
+  /**
+   * リフレッシュトークンを使ってアクセストークンを更新
+   * @param {string} refreshToken - リフレッシュトークン
+   * @returns {Promise<Object>} 新しいトークン情報
+   */
+  async refreshAccessToken(refreshToken) {
+    try {
+      // リフレッシュトークン検証
+      const tokenData = await this.jwtUtils.verifyRefreshToken(refreshToken);
+      
+      // ユーザー情報取得
+      const user = await this.getUserById(tokenData.userId);
+      
+      // 新しいアクセストークン生成
+      const tokens = await this.jwtUtils.generateTokens(user);
+      
+      return {
+        user,
+        tokens
+      };
+    } catch (error) {
+      const refreshError = new Error('リフレッシュトークンが無効です');
+      refreshError.code = 'INVALID_REFRESH_TOKEN';
+      refreshError.status = 401;
+      throw refreshError;
+    }
+  }
+
+  /**
+   * ユーザーの全デバイスからログアウト
+   * @param {number} userId - ユーザーID
+   * @returns {Promise<Object>} ログアウト結果
+   */
+  async logoutAllDevices(userId) {
+    try {
+      const refreshTokenRepository = (await import('../repositories/refreshTokenRepository.js')).default;
+      
+      // ユーザーの全リフレッシュトークンを削除
+      const deletedCount = await refreshTokenRepository.deleteByUserId(userId);
+      
+      return { 
+        success: true, 
+        message: `${deletedCount}台のデバイスからログアウトしました` 
+      };
+    } catch (error) {
+      console.error('Logout all devices error:', error);
+      return { 
+        success: true, 
+        message: '全デバイスからログアウトしました' 
+      };
+    }
   }
 
   /**

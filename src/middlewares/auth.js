@@ -22,6 +22,19 @@ export function authenticate(authService) {
         });
       }
 
+      // ブラックリストチェック
+      const jwtUtils = authService.jwtUtils;
+      if (await jwtUtils.isTokenBlacklisted(token)) {
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'TOKEN_BLACKLISTED',
+            message: 'このトークンは無効です',
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+
       // トークンからユーザー情報取得
       const user = await authService.getUserFromToken(token);
       
@@ -58,9 +71,13 @@ export function optionalAuthenticate(authService) {
       
       if (token) {
         try {
-          const user = await authService.getUserFromToken(token);
-          req.user = user;
-          req.token = token;
+          // ブラックリストチェック
+          const jwtUtils = authService.jwtUtils;
+          if (!(await jwtUtils.isTokenBlacklisted(token))) {
+            const user = await authService.getUserFromToken(token);
+            req.user = user;
+            req.token = token;
+          }
         } catch (error) {
           // オプショナル認証なので、エラーがあってもそのまま通す
           // ログにエラー情報を記録する場合はここで行う
@@ -357,6 +374,23 @@ export function rateLimitedAuthenticate(authService, options = {}) {
           error: {
             code: 'MISSING_TOKEN',
             message: '認証トークンが必要です',
+            timestamp: new Date().toISOString()
+          }
+        });
+      }
+
+      // ブラックリストチェック
+      const jwtUtils = authService.jwtUtils;
+      if (await jwtUtils.isTokenBlacklisted(token)) {
+        // 認証失敗をカウント
+        clientAttempts.count++;
+        attempts.set(clientId, clientAttempts);
+        
+        return res.status(401).json({
+          success: false,
+          error: {
+            code: 'TOKEN_BLACKLISTED',
+            message: 'このトークンは無効です',
             timestamp: new Date().toISOString()
           }
         });
