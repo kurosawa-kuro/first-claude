@@ -1,103 +1,760 @@
 openapi: 3.0.3
 info:
   title: User & Micropost API
+  description: |
+    ユーザーとマイクロポスト管理API (1:多の関係)
+    - 読み取り専用設計（update/destroy操作なし）
+    - 認証・認可なし（シンプル構成）
+    - 高速プロトタイピング用途
   version: 1.0.0
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: 開発環境
+  - url: https://api.example.com/v1
+    description: 本番環境
+
 paths:
+  # ========== ユーザー関連エンドポイント ==========
   /users:
     get:
       summary: 全ユーザー取得
+      description: |
+        システム内の全ユーザーを取得します。
+        ページネーション・フィルタリング・ソート機能付き。
       operationId: getUsers
+      tags:
+        - Users
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号（1から開始）
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: sort
+          in: query
+          description: ソート順
+          required: false
+          schema:
+            type: string
+            enum: [name_asc, name_desc, created_asc, created_desc]
+            default: created_desc
+        - name: search
+          in: query
+          description: 名前・メールでの部分一致検索
+          required: false
+          schema:
+            type: string
+            maxLength: 100
       responses:
         '200':
-          description: 成功時にユーザー配列を返す
+          description: ユーザー一覧の取得成功
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/User'
+                $ref: '#/components/schemas/UserListResponse'
+              examples:
+                users_example:
+                  summary: ユーザー一覧の例
+                  value:
+                    data:
+                      - id: 1
+                        name: "山田太郎"
+                        email: "yamada@example.com"
+                        createdAt: "2024-01-15T10:30:00Z"
+                        micropostCount: 15
+                      - id: 2
+                        name: "佐藤花子"
+                        email: "sato@example.com"
+                        createdAt: "2024-01-20T14:15:00Z"
+                        micropostCount: 8
+                    pagination:
+                      page: 1
+                      limit: 20
+                      total: 50
+                      totalPages: 3
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
         '500':
-          description: サーバーエラー
+          $ref: '#/components/responses/InternalServerError'
+
+  /users/{userId}:
+    get:
+      summary: ユーザー詳細取得
+      description: 指定されたIDのユーザー詳細情報を取得します。
+      operationId: getUserById
+      tags:
+        - Users
+      parameters:
+        - $ref: '#/components/parameters/UserIdPath'
+      responses:
+        '200':
+          description: ユーザー詳細の取得成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: '#/components/schemas/UserDetailResponse'
+              examples:
+                user_detail_example:
+                  summary: ユーザー詳細の例
+                  value:
+                    data:
+                      id: 1
+                      name: "山田太郎"
+                      email: "yamada@example.com"
+                      bio: "プログラマーです。TypeScriptとVue.jsが好きです。"
+                      location: "東京"
+                      website: "https://yamada.dev"
+                      createdAt: "2024-01-15T10:30:00Z"
+                      updatedAt: "2024-02-10T16:45:00Z"
+                      micropostCount: 15
+                      recentMicroposts:
+                        - id: 101
+                          content: "今日は新しいAPIの設計をしています"
+                          createdAt: "2024-02-10T09:30:00Z"
+                        - id: 98
+                          content: "Vue 3のComposition APIが便利すぎる"
+                          createdAt: "2024-02-09T15:20:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ========== マイクロポスト関連エンドポイント ==========
   /users/{userId}/microposts:
     get:
-      summary: ユーザーの全マイクロポスト取得
+      summary: ユーザーのマイクロポスト一覧取得
+      description: |
+        指定されたユーザーの全マイクロポストを取得します。
+        時系列順（新しい順）でソートされ、ページネーション対応。
       operationId: getUserMicroposts
+      tags:
+        - Microposts
       parameters:
-        - name: userId
-          in: path
-          required: true
+        - $ref: '#/components/parameters/UserIdPath'
+        - name: page
+          in: query
+          description: ページ番号（1から開始）
+          required: false
           schema:
             type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+        - name: since
+          in: query
+          description: 指定日時以降の投稿のみ取得
+          required: false
+          schema:
+            type: string
+            format: date-time
+        - name: until
+          in: query
+          description: 指定日時以前の投稿のみ取得
+          required: false
+          schema:
+            type: string
+            format: date-time
       responses:
         '200':
-          description: 成功時に micropost の配列
+          description: マイクロポスト一覧の取得成功
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Micropost'
+                $ref: '#/components/schemas/MicropostListResponse'
+              examples:
+                microposts_example:
+                  summary: マイクロポスト一覧の例
+                  value:
+                    data:
+                      - id: 101
+                        userId: 1
+                        content: "今日は新しいAPIの設計をしています"
+                        contentLength: 18
+                        createdAt: "2024-02-10T09:30:00Z"
+                        user:
+                          id: 1
+                          name: "山田太郎"
+                          email: "yamada@example.com"
+                      - id: 98
+                        userId: 1
+                        content: "Vue 3のComposition APIが便利すぎる"
+                        contentLength: 22
+                        createdAt: "2024-02-09T15:20:00Z"
+                        user:
+                          id: 1
+                          name: "山田太郎"
+                          email: "yamada@example.com"
+                    pagination:
+                      page: 1
+                      limit: 10
+                      total: 15
+                      totalPages: 2
+                    meta:
+                      userId: 1
+                      userName: "山田太郎"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
     post:
       summary: 新規マイクロポスト作成
+      description: |
+        指定されたユーザーの新しいマイクロポストを作成します。
+        文字数制限：1-280文字
       operationId: createUserMicropost
+      tags:
+        - Microposts
       parameters:
-        - name: userId
-          in: path
-          required: true
-          schema:
-            type: integer
+        - $ref: '#/components/parameters/UserIdPath'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NewMicropost'
+              $ref: '#/components/schemas/CreateMicropostRequest'
+            examples:
+              create_example:
+                summary: マイクロポスト作成の例
+                value:
+                  content: "Express + lowdb でAPI開発中。json.dbが思った以上に便利！"
       responses:
         '201':
-          description: 作成成功
+          description: マイクロポスト作成成功
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Micropost'
+                $ref: '#/components/schemas/MicropostResponse'
+              examples:
+                created_micropost:
+                  summary: 作成されたマイクロポスト
+                  value:
+                    data:
+                      id: 102
+                      userId: 1
+                      content: "Express + lowdb でAPI開発中。json.dbが思った以上に便利！"
+                      contentLength: 35
+                      createdAt: "2024-02-10T16:45:00Z"
+                      user:
+                        id: 1
+                        name: "山田太郎"
+                        email: "yamada@example.com"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  # ========== 全体のマイクロポスト ==========
+  /microposts:
+    get:
+      summary: 全マイクロポスト取得
+      description: |
+        システム内の全マイクロポストを時系列順で取得します。
+        タイムライン表示用途。
+      operationId: getAllMicroposts
+      tags:
+        - Microposts
+      parameters:
+        - name: page
+          in: query
+          description: ページ番号（1から開始）
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: limit
+          in: query
+          description: 1ページあたりの件数
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 20
+        - name: search
+          in: query
+          description: 投稿内容での部分一致検索
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        '200':
+          description: 全マイクロポスト一覧の取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MicropostListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /microposts/{micropostId}:
+    get:
+      summary: マイクロポスト詳細取得
+      description: 指定されたIDのマイクロポスト詳細を取得します。
+      operationId: getMicropostById
+      tags:
+        - Microposts
+      parameters:
+        - name: micropostId
+          in: path
+          required: true
+          description: マイクロポストID
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: マイクロポスト詳細の取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MicropostResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+# ========== コンポーネント定義 ==========
 components:
+  # ========== セキュリティスキーム ==========
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT認証トークン。
+        Keycloak互換形式でaccess_tokenを使用。
+
+  # ========== パラメータ定義 ==========
+  parameters:
+    UserIdPath:
+      name: userId
+      in: path
+      required: true
+      description: ユーザーID
+      schema:
+        type: integer
+        minimum: 1
+      example: 1
+
+  # ========== レスポンス定義 ==========
+  responses:
+    BadRequest:
+      description: リクエストが不正です
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            bad_request:
+              summary: 不正なリクエスト
+              value:
+                error: "bad_request"
+                message: "リクエストパラメータが不正です"
+                details:
+                  - "page パラメータは1以上の整数である必要があります"
+
+    Unauthorized:
+      description: 認証が必要です
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            unauthorized:
+              summary: 認証エラー
+              value:
+                error: "unauthorized"
+                message: "有効な認証トークンが必要です"
+
+    Forbidden:
+      description: アクセス権限がありません
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            forbidden:
+              summary: 権限エラー
+              value:
+                error: "forbidden"
+                message: "このリソースにアクセスする権限がありません"
+
+    NotFound:
+      description: リソースが見つかりません
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            not_found:
+              summary: リソース未発見
+              value:
+                error: "not_found"
+                message: "指定されたリソースが見つかりません"
+
+    ValidationError:
+      description: バリデーションエラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            validation_error:
+              summary: バリデーションエラー
+              value:
+                error: "validation_error"
+                message: "入力データが不正です"
+                details:
+                  - "content: 1文字以上280文字以下で入力してください"
+                  - "content: 必須フィールドです"
+
+    InternalServerError:
+      description: サーバー内部エラー
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          examples:
+            server_error:
+              summary: サーバーエラー
+              value:
+                error: "internal_server_error"
+                message: "サーバー内部でエラーが発生しました"
+
+  # ========== スキーマ定義 ==========
   schemas:
+    # ========== ユーザー関連スキーマ ==========
     User:
       type: object
+      required:
+        - id
+        - name
+        - email
+        - createdAt
       properties:
         id:
           type: integer
+          minimum: 1
+          description: ユーザーID（自動生成）
+          example: 1
         name:
           type: string
+          minLength: 1
+          maxLength: 50
+          description: ユーザー名
+          example: "山田太郎"
         email:
           type: string
           format: email
+          maxLength: 100
+          description: メールアドレス（一意）
+          example: "yamada@example.com"
+        bio:
+          type: string
+          maxLength: 200
+          description: 自己紹介文
+          example: "プログラマーです。TypeScriptとVue.jsが好きです。"
+        location:
+          type: string
+          maxLength: 50
+          description: 居住地
+          example: "東京"
+        website:
+          type: string
+          format: uri
+          maxLength: 200
+          description: ウェブサイトURL
+          example: "https://yamada.dev"
         createdAt:
           type: string
           format: date-time
-    Error:
-      type: object
-      properties:
-        error:
+          description: アカウント作成日時
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
           type: string
-        message:
-          type: string
-    Micropost:
+          format: date-time
+          description: 最終更新日時
+          example: "2024-02-10T16:45:00Z"
+        micropostCount:
+          type: integer
+          minimum: 0
+          description: 投稿数
+          example: 15
+
+    UserSummary:
       type: object
+      required:
+        - id
+        - name
+        - email
       properties:
         id:
           type: integer
+          minimum: 1
+          example: 1
+        name:
+          type: string
+          example: "山田太郎"
+        email:
+          type: string
+          format: email
+          example: "yamada@example.com"
+
+    UserListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    UserDetailResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          allOf:
+            - $ref: '#/components/schemas/User'
+            - type: object
+              properties:
+                recentMicroposts:
+                  type: array
+                  maxItems: 5
+                  description: 最新の投稿（最大5件）
+                  items:
+                    $ref: '#/components/schemas/MicropostSummary'
+
+    # ========== マイクロポスト関連スキーマ ==========
+    Micropost:
+      type: object
+      required:
+        - id
+        - userId
+        - content
+        - createdAt
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          description: マイクロポストID（自動生成）
+          example: 101
         userId:
           type: integer
+          minimum: 1
+          description: 投稿者のユーザーID
+          example: 1
         content:
           type: string
-    NewMicropost:
+          minLength: 1
+          maxLength: 280
+          description: 投稿内容
+          example: "今日は新しいAPIの設計をしています"
+        contentLength:
+          type: integer
+          minimum: 0
+          maximum: 280
+          description: 投稿内容の文字数
+          example: 18
+        createdAt:
+          type: string
+          format: date-time
+          description: 投稿日時
+          example: "2024-02-10T09:30:00Z"
+        user:
+          $ref: '#/components/schemas/UserSummary'
+
+    MicropostSummary:
+      type: object
+      required:
+        - id
+        - content
+        - createdAt
+      properties:
+        id:
+          type: integer
+          example: 101
+        content:
+          type: string
+          example: "今日は新しいAPIの設計をしています"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2024-02-10T09:30:00Z"
+
+    CreateMicropostRequest:
       type: object
       required:
         - content
       properties:
         content:
           type: string
+          minLength: 1
+          maxLength: 280
+          description: |
+            投稿内容
+            - 1文字以上280文字以下
+            - 改行文字も含む
+            - HTMLタグは自動エスケープ
+          example: "Express + lowdb でAPI開発中。json.dbが思った以上に便利！"
+
+    MicropostResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/Micropost'
+
+    MicropostListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Micropost'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+        meta:
+          type: object
+          description: 追加のメタデータ
+          properties:
+            userId:
+              type: integer
+              description: フィルタリング対象のユーザーID（ユーザー別取得時）
+            userName:
+              type: string
+              description: フィルタリング対象のユーザー名
+
+    # ========== 共通スキーマ ==========
+    Pagination:
+      type: object
+      required:
+        - page
+        - limit
+        - total
+        - totalPages
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          description: 現在のページ番号
+          example: 1
+        limit:
+          type: integer
+          minimum: 1
+          description: 1ページあたりの件数
+          example: 20
+        total:
+          type: integer
+          minimum: 0
+          description: 総件数
+          example: 50
+        totalPages:
+          type: integer
+          minimum: 0
+          description: 総ページ数
+          example: 3
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: エラーコード
+          example: "validation_error"
+        message:
+          type: string
+          description: エラーメッセージ（日本語）
+          example: "入力データが不正です"
+        details:
+          type: array
+          description: 詳細なエラー情報（バリデーションエラー等）
+          items:
+            type: string
+          example:
+            - "content: 1文字以上280文字以下で入力してください"
+        requestId:
+          type: string
+          description: リクエストID（デバッグ用）
+          example: "req_12345"
+        timestamp:
+          type: string
+          format: date-time
+          description: エラー発生日時
+          example: "2024-02-10T16:45:00Z"
+
+tags:
+  - name: Users
+    description: ユーザー管理機能
+  - name: Microposts
+    description: マイクロポスト（短文投稿）管理機能

@@ -23,7 +23,7 @@ const envSchema = z.object({
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).default('info'),
   
   // API
-  API_BASE_PATH: z.string().default('/api'),
+  API_BASE_PATH: z.string().default('/api/v1'),
   SWAGGER_PATH: z.string().default('/api-docs'),
 });
 

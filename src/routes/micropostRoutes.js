@@ -1,7 +1,7 @@
 import express from 'express';
-import { getUserMicroposts, createUserMicropost } from '../controllers/micropostController.js';
+import { getUserMicroposts, createUserMicropost, getAllMicropostsController, getMicropostByIdController } from '../controllers/micropostController.js';
 import { validateRequest } from '../middlewares/validation.js';
-import { MicropostParamsSchema, CreateMicropostSchema } from '../schemas/micropost.js';
+import { MicropostParamsSchema, CreateMicropostSchema, UserMicropostQueryParamsSchema, MicropostQueryParamsSchema, MicropostIdParamsSchema } from '../schemas/micropost.js';
 import { createEndpointLimiter } from '../middlewares/rateLimiting.js';
 
 const router = express.Router();
@@ -23,7 +23,10 @@ const micropostLimiter = createEndpointLimiter({
 router.get(
   '/:userId/microposts',
   micropostLimiter,
-  validateRequest({ params: MicropostParamsSchema }),
+  validateRequest({ 
+    params: MicropostParamsSchema,
+    query: UserMicropostQueryParamsSchema
+  }),
   getUserMicroposts
 );
 
