@@ -18,6 +18,211 @@ servers:
     description: 本番環境
 
 paths:
+  # ========== 認証関連エンドポイント ==========
+  /auth/register:
+    post:
+      summary: ユーザー登録
+      description: |-
+        新規ユーザーアカウントを作成します。
+        - メールアドレスは一意である必要があります
+        - パスワードは8文字以上必要です
+        - デフォルトロールは 'user' です
+      operationId: registerUser
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              register_example:
+                summary: ユーザー登録の例
+                value:
+                  name: "田中太郎"
+                  email: "tanaka@example.com"
+                  password: "SecurePass123"
+      responses:
+        '201':
+          description: ユーザー登録成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                register_success:
+                  summary: 登録成功レスポンス
+                  value:
+                    data:
+                      user:
+                        id: 123
+                        name: "田中太郎"
+                        email: "tanaka@example.com"
+                        roles: ["user"]
+                        createdAt: "2024-02-10T16:45:00Z"
+                      tokens:
+                        access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        token_type: "Bearer"
+                        expires_in: 3600
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: メールアドレスが既に使用されています
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                email_exists:
+                  summary: メールアドレス重複エラー
+                  value:
+                    error: "email_already_exists"
+                    message: "このメールアドレスは既に使用されています"
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/login:
+    post:
+      summary: ユーザーログイン
+      description: |-
+        メールアドレスとパスワードでユーザー認証を行います。
+        成功時にJWTアクセストークンを返します。
+      operationId: loginUser
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              login_example:
+                summary: ログインの例
+                value:
+                  email: "tanaka@example.com"
+                  password: "SecurePass123"
+      responses:
+        '200':
+          description: ログイン成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                login_success:
+                  summary: ログイン成功レスポンス
+                  value:
+                    data:
+                      user:
+                        id: 123
+                        name: "田中太郎"
+                        email: "tanaka@example.com"
+                        roles: ["user"]
+                        createdAt: "2024-01-15T10:30:00Z"
+                      tokens:
+                        access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        token_type: "Bearer"
+                        expires_in: 3600
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: 認証に失敗しました
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_credentials:
+                  summary: 認証失敗
+                  value:
+                    error: "invalid_credentials"
+                    message: "メールアドレスまたはパスワードが正しくありません"
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/logout:
+    post:
+      summary: ユーザーログアウト
+      description: |-
+        現在のセッションを終了します。
+        将来的にはトークンのブラックリスト管理を実装予定。
+      operationId: logoutUser
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ログアウト成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - message
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "ログアウトしました"
+              examples:
+                logout_success:
+                  summary: ログアウト成功
+                  value:
+                    success: true
+                    message: "ログアウトしました"
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/me:
+    get:
+      summary: 自分のユーザー情報取得
+      description: |-
+        認証されたユーザーの詳細情報を取得します。
+        トークンから自動的にユーザーを特定します。
+      operationId: getCurrentUser
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: ユーザー情報の取得成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentUserResponse'
+              examples:
+                current_user:
+                  summary: 現在のユーザー情報
+                  value:
+                    data:
+                      id: 123
+                      name: "田中太郎"
+                      email: "tanaka@example.com"
+                      bio: "フルスタック開発者です"
+                      location: "東京"
+                      website: "https://tanaka.dev"
+                      roles: ["user", "readonly-admin"]
+                      createdAt: "2024-01-15T10:30:00Z"
+                      updatedAt: "2024-02-10T16:45:00Z"
+                      micropostCount: 42
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   # ========== ユーザー関連エンドポイント ==========
   /users:
     get:
@@ -533,6 +738,13 @@ components:
           format: date-time
           description: 最終更新日時
           example: "2024-02-10T16:45:00Z"
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [user, readonly-admin, admin]
+          description: ユーザーの権限ロール
+          example: ["user"]
         micropostCount:
           type: integer
           minimum: 0
@@ -753,7 +965,160 @@ components:
           description: エラー発生日時
           example: "2024-02-10T16:45:00Z"
 
+    # ========== 認証関連スキーマ ==========
+    RegisterRequest:
+      type: object
+      required:
+        - name
+        - email
+        - password
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 50
+          description: ユーザー名
+          example: "田中太郎"
+        email:
+          type: string
+          format: email
+          maxLength: 100
+          description: メールアドレス（一意）
+          example: "tanaka@example.com"
+        password:
+          type: string
+          minLength: 8
+          maxLength: 100
+          description: パスワード（8文字以上）
+          example: "SecurePass123"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          description: メールアドレス
+          example: "tanaka@example.com"
+        password:
+          type: string
+          description: パスワード
+          example: "SecurePass123"
+
+    AuthTokens:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - expires_in
+      properties:
+        access_token:
+          type: string
+          description: JWTアクセストークン
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        token_type:
+          type: string
+          enum: [Bearer]
+          description: トークンタイプ
+          example: "Bearer"
+        expires_in:
+          type: integer
+          minimum: 1
+          description: トークンの有効期限（秒）
+          example: 3600
+
+    AuthUser:
+      type: object
+      required:
+        - id
+        - name
+        - email
+        - roles
+        - createdAt
+      properties:
+        id:
+          type: integer
+          minimum: 1
+          description: ユーザーID
+          example: 123
+        name:
+          type: string
+          description: ユーザー名
+          example: "田中太郎"
+        email:
+          type: string
+          format: email
+          description: メールアドレス
+          example: "tanaka@example.com"
+        bio:
+          type: string
+          maxLength: 200
+          description: 自己紹介文
+          example: "フルスタック開発者です"
+        location:
+          type: string
+          maxLength: 50
+          description: 居住地
+          example: "東京"
+        website:
+          type: string
+          format: uri
+          maxLength: 200
+          description: ウェブサイトURL
+          example: "https://tanaka.dev"
+        roles:
+          type: array
+          items:
+            type: string
+            enum: [user, readonly-admin, admin]
+          description: ユーザーの権限ロール
+          example: ["user"]
+        createdAt:
+          type: string
+          format: date-time
+          description: アカウント作成日時
+          example: "2024-01-15T10:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          description: 最終更新日時
+          example: "2024-02-10T16:45:00Z"
+        micropostCount:
+          type: integer
+          minimum: 0
+          description: 投稿数
+          example: 42
+
+    AuthResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+          required:
+            - user
+            - tokens
+          properties:
+            user:
+              $ref: '#/components/schemas/AuthUser'
+            tokens:
+              $ref: '#/components/schemas/AuthTokens'
+
+    CurrentUserResponse:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/AuthUser'
+
 tags:
+  - name: Authentication
+    description: 認証・認可機能
   - name: Users
     description: ユーザー管理機能
   - name: Microposts

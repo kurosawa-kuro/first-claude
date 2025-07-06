@@ -37,11 +37,11 @@ export const getUserMicroposts = handleAsyncError(async (req, res) => {
   const enrichedMicroposts = paginatedMicroposts.map(post => ({
     ...post,
     contentLength: post.content.length,
-    user: {
+    user: user ? {
       id: user.id,
       name: user.name,
       email: user.email
-    }
+    } : null
   }));
   
   const response = {
@@ -54,7 +54,7 @@ export const getUserMicroposts = handleAsyncError(async (req, res) => {
     },
     meta: {
       userId: userId,
-      userName: user.name
+      userName: user ? user.name : null
     }
   };
   
@@ -78,11 +78,11 @@ export const createUserMicropost = handleAsyncError(async (req, res) => {
   const enrichedMicropost = {
     ...newMicropost,
     contentLength: newMicropost.content.length,
-    user: {
+    user: user ? {
       id: user.id,
       name: user.name,
       email: user.email
-    }
+    } : null
   };
   
   const response = {
@@ -122,11 +122,11 @@ export const getAllMicropostsController = handleAsyncError(async (req, res) => {
       return {
         ...post,
         contentLength: post.content.length,
-        user: {
+        user: user ? {
           id: user.id,
           name: user.name,
           email: user.email
-        }
+        } : null
       };
     })
   );
@@ -163,11 +163,11 @@ export const getMicropostByIdController = handleAsyncError(async (req, res) => {
   const enrichedMicropost = {
     ...micropost,
     contentLength: micropost.content.length,
-    user: {
+    user: user ? {
       id: user.id,
       name: user.name,
       email: user.email
-    }
+    } : null
   };
   
   const response = {

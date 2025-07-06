@@ -4,36 +4,71 @@
       "id": 1,
       "name": "Alice Johnson",
       "email": "alice@example.com",
-      "createdAt": "2024-01-15T10:00:00Z"
+      "bio": "Software engineer with a passion for API development",
+      "location": "Tokyo",
+      "website": "https://alice.dev",
+      "roles": [
+        "user"
+      ],
+      "createdAt": "2024-01-15T10:00:00Z",
+      "updatedAt": "2024-01-15T10:00:00Z",
+      "passwordHash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/PlYQx.QaK"
     },
     {
       "id": 2,
       "name": "Bob Smith",
       "email": "bob@example.com",
-      "createdAt": "2024-01-16T14:30:00Z"
+      "bio": "Full-stack developer and tech enthusiast",
+      "location": "Osaka",
+      "website": "https://bobsmith.blog",
+      "roles": [
+        "user",
+        "readonly-admin"
+      ],
+      "createdAt": "2024-01-16T14:30:00Z",
+      "updatedAt": "2024-01-16T14:30:00Z",
+      "passwordHash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/PlYQx.QaK"
     },
     {
       "id": 3,
       "name": "Charlie Brown",
       "email": "charlie@example.com",
-      "createdAt": "2024-01-17T09:15:00Z"
+      "bio": "DevOps engineer and cloud architect",
+      "location": "Kyoto",
+      "website": "https://charlie.cloud",
+      "roles": [
+        "user",
+        "admin"
+      ],
+      "createdAt": "2024-01-17T09:15:00Z",
+      "updatedAt": "2024-01-17T09:15:00Z",
+      "passwordHash": "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/LewdBPj/PlYQx.QaK"
     }
   ],
   "microposts": [
     {
       "id": 1,
       "userId": 1,
-      "content": "First micropost for user 1"
+      "content": "First micropost for user 1",
+      "createdAt": "2024-01-15T11:00:00Z"
     },
     {
       "id": 2,
       "userId": 1,
-      "content": "Second micropost for user 1"
+      "content": "Second micropost for user 1",
+      "createdAt": "2024-01-15T12:00:00Z"
     },
     {
       "id": 3,
       "userId": 2,
-      "content": "First micropost for user 2"
+      "content": "First micropost for user 2",
+      "createdAt": "2024-01-16T15:00:00Z"
+    },
+    {
+      "id": 4,
+      "userId": 3,
+      "content": "Another micropost with great content",
+      "createdAt": "2024-01-17T10:00:00Z"
     }
   ]
 }

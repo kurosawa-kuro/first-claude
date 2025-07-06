@@ -25,6 +25,10 @@ const envSchema = z.object({
   // API
   API_BASE_PATH: z.string().default('/api/v1'),
   SWAGGER_PATH: z.string().default('/api-docs'),
+  
+  // JWT
+  JWT_SECRET: z.string().min(32, 'JWT secret must be at least 32 characters'),
+  JWT_EXPIRES_IN: z.coerce.number().default(3600),
 });
 
 // Validate environment variables
@@ -71,6 +75,12 @@ export const config = {
   api: {
     basePath: env.API_BASE_PATH,
     swaggerPath: env.SWAGGER_PATH,
+  },
+  
+  // JWT
+  jwt: {
+    secret: env.JWT_SECRET,
+    expiresIn: env.JWT_EXPIRES_IN,
   },
 };
 
