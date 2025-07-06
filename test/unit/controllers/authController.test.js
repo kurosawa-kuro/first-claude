@@ -1,5 +1,5 @@
 import request from 'supertest';
-import app from '../src/app.js';
+import app from '../../../src/app.js';
 import { LowSync } from 'lowdb';
 import { JSONFileSync } from 'lowdb/node';
 import fs from 'fs';
