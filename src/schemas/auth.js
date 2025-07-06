@@ -132,11 +132,78 @@ export const tokenBlacklistEntrySchema = z.object({
   expiresAt: z.number().int().positive()
 });
 
+// パスワード変更スキーマ
+export const changePasswordRequestSchema = z.object({
+  currentPassword: z.string().min(1, '現在のパスワードを入力してください'),
+  newPassword: z.string()
+    .min(8, 'パスワードは8文字以上で入力してください')
+    .max(100, 'パスワードは100文字以下で入力してください')
+    .regex(PASSWORD_REGEX, 'パスワードは英数字を含む必要があります')
+});
+
+// パスワードリセット要求スキーマ
+export const forgotPasswordRequestSchema = z.object({
+  email: z.string()
+    .email('有効なメールアドレスを入力してください')
+    .toLowerCase()
+    .trim()
+});
+
+// パスワードリセット実行スキーマ
+export const resetPasswordRequestSchema = z.object({
+  token: z.string().min(1, 'リセットトークンが必要です'),
+  newPassword: z.string()
+    .min(8, 'パスワードは8文字以上で入力してください')
+    .max(100, 'パスワードは100文字以下で入力してください')
+    .regex(PASSWORD_REGEX, 'パスワードは英数字を含む必要があります')
+});
+
+// パスワードリセットトークンスキーマ
+export const passwordResetTokenSchema = z.object({
+  id: z.number().int().positive(),
+  userId: z.number().int().positive(),
+  token: z.string().min(1),
+  expiresAt: z.number().int().positive(),
+  createdAt: z.string().datetime(),
+  used: z.boolean().default(false)
+});
+
+// Keycloak互換レスポンススキーマ
+export const keycloakTokenResponseSchema = z.object({
+  access_token: z.string().min(1),
+  expires_in: z.number().int().positive(),
+  refresh_expires_in: z.number().int().positive().optional(),
+  refresh_token: z.string().min(1).optional(),
+  token_type: z.literal('Bearer'),
+  'not-before-policy': z.number().int().optional(),
+  session_state: z.string().optional(),
+  scope: z.string().optional()
+});
+
+// Keycloak互換ユーザー情報スキーマ
+export const keycloakUserInfoSchema = z.object({
+  sub: z.string().min(1),
+  name: z.string().optional(),
+  given_name: z.string().optional(),
+  family_name: z.string().optional(),
+  preferred_username: z.string().optional(),
+  email: z.string().email().optional(),
+  email_verified: z.boolean().optional(),
+  realm_access: z.object({
+    roles: z.array(z.string()).optional()
+  }).optional(),
+  resource_access: z.record(z.object({
+    roles: z.array(z.string()).optional()
+  })).optional()
+});
+
 // エクスポート用のデフォルト設定
 export const defaultAuthConfig = {
   jwtExpiresIn: 3600, // 1時間
   bcryptRounds: 12,
   maxLoginAttempts: 5,
   lockoutDuration: 15 * 60, // 15分
-  refreshTokenExpiresIn: 30 * 24 * 60 * 60 // 30日
+  refreshTokenExpiresIn: 30 * 24 * 60 * 60, // 30日
+  passwordResetTokenExpiresIn: 60 * 60, // 1時間
+  passwordResetTokenLength: 32
 };

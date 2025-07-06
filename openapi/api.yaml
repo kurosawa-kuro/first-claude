@@ -223,6 +223,232 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
+  /auth/password:
+    put:
+      summary: パスワード変更
+      description: |-
+        認証されたユーザーのパスワードを変更します。
+        現在のパスワードの確認が必要です。
+      operationId: changePassword
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+            examples:
+              change_password_example:
+                summary: パスワード変更の例
+                value:
+                  currentPassword: "OldPassword123"
+                  newPassword: "NewSecurePass456"
+      responses:
+        '200':
+          description: パスワード変更成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required:
+                      - success
+                      - message
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      message:
+                        type: string
+                        example: "パスワードが正常に変更されました"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/forgot-password:
+    post:
+      summary: パスワードリセット要求
+      description: |-
+        パスワードリセット用のメールを送信します。
+        セキュリティのため、存在しないメールアドレスでも成功レスポンスを返します。
+      operationId: forgotPassword
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPasswordRequest'
+            examples:
+              forgot_password_example:
+                summary: パスワードリセット要求の例
+                value:
+                  email: "user@example.com"
+      responses:
+        '200':
+          description: リセットメール送信成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required:
+                      - success
+                      - message
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      message:
+                        type: string
+                        example: "パスワードリセットメールを送信しました（該当するアカウントが存在する場合）"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/reset-password:
+    post:
+      summary: パスワードリセット実行
+      description: |-
+        リセットトークンを使用してパスワードを新しく設定します。
+        成功時は全デバイスからログアウトされます。
+      operationId: resetPassword
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResetPasswordRequest'
+            examples:
+              reset_password_example:
+                summary: パスワードリセットの例
+                value:
+                  token: "reset-token-from-email"
+                  newPassword: "NewSecurePass789"
+      responses:
+        '200':
+          description: パスワードリセット成功
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required:
+                      - success
+                      - message
+                    properties:
+                      success:
+                        type: boolean
+                        example: true
+                      message:
+                        type: string
+                        example: "パスワードが正常にリセットされました"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /auth/refresh:
+    post:
+      summary: アクセストークンリフレッシュ
+      description: |-
+        リフレッシュトークンを使用して新しいアクセストークンを取得します。
+        Keycloak互換のインターフェースを提供します。
+      operationId: refreshToken
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+            examples:
+              refresh_token_example:
+                summary: トークンリフレッシュの例
+                value:
+                  refresh_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+      responses:
+        '200':
+          description: トークンリフレッシュ成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+              examples:
+                refresh_success:
+                  summary: リフレッシュ成功レスポンス
+                  value:
+                    data:
+                      user:
+                        id: 123
+                        name: "田中太郎"
+                        email: "tanaka@example.com"
+                        roles: ["user"]
+                        createdAt: "2024-01-15T10:30:00Z"
+                      tokens:
+                        access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                        token_type: "Bearer"
+                        expires_in: 3600
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: リフレッシュトークンが無効です
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_refresh_token:
+                  summary: 無効なリフレッシュトークン
+                  value:
+                    error: "invalid_refresh_token"
+                    message: "リフレッシュトークンが無効です"
+        '422':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
   # ========== ユーザー関連エンドポイント ==========
   /users:
     get:
@@ -1115,6 +1341,156 @@ components:
       properties:
         data:
           $ref: '#/components/schemas/AuthUser'
+
+    # ========== パスワード管理スキーマ ==========
+    ChangePasswordRequest:
+      type: object
+      required:
+        - currentPassword
+        - newPassword
+      properties:
+        currentPassword:
+          type: string
+          description: 現在のパスワード
+          example: "OldPassword123"
+        newPassword:
+          type: string
+          minLength: 8
+          maxLength: 100
+          pattern: '^(?=.*[a-zA-Z])(?=.*\d).{8,}$'
+          description: 新しいパスワード（8文字以上、英数字を含む）
+          example: "NewSecurePass456"
+
+    ForgotPasswordRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: パスワードリセット用メールアドレス
+          example: "user@example.com"
+
+    ResetPasswordRequest:
+      type: object
+      required:
+        - token
+        - newPassword
+      properties:
+        token:
+          type: string
+          description: パスワードリセットトークン（メールから取得）
+          example: "reset-token-from-email"
+        newPassword:
+          type: string
+          minLength: 8
+          maxLength: 100
+          pattern: '^(?=.*[a-zA-Z])(?=.*\d).{8,}$'
+          description: 新しいパスワード（8文字以上、英数字を含む）
+          example: "NewSecurePass789"
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
+        refresh_token:
+          type: string
+          description: リフレッシュトークン
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    # ========== Keycloak互換スキーマ ==========
+    KeycloakTokenResponse:
+      type: object
+      required:
+        - access_token
+        - token_type
+        - expires_in
+      properties:
+        access_token:
+          type: string
+          description: アクセストークン
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        token_type:
+          type: string
+          enum: [Bearer]
+          description: トークンタイプ
+          example: "Bearer"
+        expires_in:
+          type: integer
+          description: トークン有効期限（秒）
+          example: 3600
+        refresh_expires_in:
+          type: integer
+          description: リフレッシュトークン有効期限（秒）
+          example: 604800
+        refresh_token:
+          type: string
+          description: リフレッシュトークン
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        scope:
+          type: string
+          description: アクセススコープ
+          example: "openid profile email"
+        session_state:
+          type: string
+          description: セッション状態
+          example: "12345678-1234-1234-1234-123456789012"
+
+    KeycloakUserInfo:
+      type: object
+      required:
+        - sub
+      properties:
+        sub:
+          type: string
+          description: ユーザー識別子
+          example: "12345678-1234-1234-1234-123456789012"
+        name:
+          type: string
+          description: フルネーム
+          example: "田中太郎"
+        given_name:
+          type: string
+          description: 名前
+          example: "太郎"
+        family_name:
+          type: string
+          description: 姓
+          example: "田中"
+        preferred_username:
+          type: string
+          description: ユーザー名
+          example: "tanaka"
+        email:
+          type: string
+          format: email
+          description: メールアドレス
+          example: "tanaka@example.com"
+        email_verified:
+          type: boolean
+          description: メール認証状態
+          example: true
+        realm_access:
+          type: object
+          description: レルム権限
+          properties:
+            roles:
+              type: array
+              items:
+                type: string
+              example: ["user", "offline_access"]
+        resource_access:
+          type: object
+          description: リソース権限
+          additionalProperties:
+            type: object
+            properties:
+              roles:
+                type: array
+                items:
+                  type: string
 
 tags:
   - name: Authentication

@@ -38,29 +38,29 @@ export function createAuthRouter(authService) {
    */
   router.get('/me', authenticate(authService), authController.getCurrentUser);
 
-  // ========== 将来実装予定のエンドポイント ==========
+  // ========== パスワード管理エンドポイント ==========
   
   /**
    * PUT /auth/password
-   * パスワード変更
+   * パスワード変更（認証必要）
    */
   router.put('/password', authenticate(authService), authController.changePassword);
 
   /**
    * POST /auth/forgot-password
-   * パスワードリセット要求
+   * パスワードリセット要求（公開）
    */
   router.post('/forgot-password', authController.forgotPassword);
 
   /**
    * POST /auth/reset-password
-   * パスワードリセット実行
+   * パスワードリセット実行（公開）
    */
   router.post('/reset-password', authController.resetPassword);
 
   /**
    * POST /auth/refresh
-   * トークンリフレッシュ
+   * トークンリフレッシュ（公開）
    */
   router.post('/refresh', authController.refreshToken);
 

@@ -2,7 +2,11 @@ import {
   registerRequestSchema, 
   loginRequestSchema,
   authResponseSchema,
-  currentUserResponseSchema 
+  currentUserResponseSchema,
+  changePasswordRequestSchema,
+  forgotPasswordRequestSchema,
+  resetPasswordRequestSchema,
+  refreshTokenRequestSchema
 } from '../schemas/auth.js';
 
 /**
@@ -119,80 +123,98 @@ export class AuthController {
   }
 
   /**
-   * パスワード変更（将来実装予定）
+   * パスワード変更
    * PUT /auth/password
    */
   async changePassword(req, res) {
     try {
-      // TODO: パスワード変更実装
-      res.status(501).json({
-        success: false,
-        error: {
-          code: 'NOT_IMPLEMENTED',
-          message: 'パスワード変更機能は実装されていません',
-          timestamp: new Date().toISOString()
-        }
+      // 認証ミドルウェアでユーザー情報が設定済み
+      const userId = req.user.id;
+      
+      // リクエストボディバリデーション
+      const validatedData = changePasswordRequestSchema.parse(req.body);
+      
+      // パスワード変更処理
+      const result = await this.authService.changePassword(userId, validatedData);
+      
+      // 成功レスポンス
+      res.status(200).json({
+        success: true,
+        data: result
       });
+      
     } catch (error) {
       this._handleError(error, res);
     }
   }
 
   /**
-   * パスワードリセット要求（将来実装予定）
+   * パスワードリセット要求
    * POST /auth/forgot-password
    */
   async forgotPassword(req, res) {
     try {
-      // TODO: パスワードリセット実装
-      res.status(501).json({
-        success: false,
-        error: {
-          code: 'NOT_IMPLEMENTED',
-          message: 'パスワードリセット機能は実装されていません',
-          timestamp: new Date().toISOString()
-        }
+      // リクエストボディバリデーション
+      const validatedData = forgotPasswordRequestSchema.parse(req.body);
+      
+      // パスワードリセット要求処理
+      const result = await this.authService.forgotPassword(validatedData);
+      
+      // 成功レスポンス
+      res.status(200).json({
+        success: true,
+        data: result
       });
+      
     } catch (error) {
       this._handleError(error, res);
     }
   }
 
   /**
-   * パスワードリセット実行（将来実装予定）
+   * パスワードリセット実行
    * POST /auth/reset-password
    */
   async resetPassword(req, res) {
     try {
-      // TODO: パスワードリセット実行実装
-      res.status(501).json({
-        success: false,
-        error: {
-          code: 'NOT_IMPLEMENTED',
-          message: 'パスワードリセット実行機能は実装されていません',
-          timestamp: new Date().toISOString()
-        }
+      // リクエストボディバリデーション
+      const validatedData = resetPasswordRequestSchema.parse(req.body);
+      
+      // パスワードリセット実行処理
+      const result = await this.authService.resetPassword(validatedData);
+      
+      // 成功レスポンス
+      res.status(200).json({
+        success: true,
+        data: result
       });
+      
     } catch (error) {
       this._handleError(error, res);
     }
   }
 
   /**
-   * トークンリフレッシュ（将来実装予定）
+   * トークンリフレッシュ
    * POST /auth/refresh
    */
   async refreshToken(req, res) {
     try {
-      // TODO: トークンリフレッシュ実装
-      res.status(501).json({
-        success: false,
-        error: {
-          code: 'NOT_IMPLEMENTED',
-          message: 'トークンリフレッシュ機能は実装されていません',
-          timestamp: new Date().toISOString()
-        }
+      // リクエストボディバリデーション
+      const validatedData = refreshTokenRequestSchema.parse(req.body);
+      
+      // トークンリフレッシュ処理
+      const result = await this.authService.refreshAccessToken(validatedData.refresh_token);
+      
+      // レスポンスバリデーション
+      const validatedResponse = authResponseSchema.parse({ data: result });
+      
+      // 成功レスポンス
+      res.status(200).json({
+        success: true,
+        ...validatedResponse
       });
+      
     } catch (error) {
       this._handleError(error, res);
     }

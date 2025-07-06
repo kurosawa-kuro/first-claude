@@ -4,8 +4,14 @@ import {
   loginRequestSchema,
   createUserSchema,
   authUserSchema,
-  defaultAuthConfig
+  defaultAuthConfig,
+  changePasswordRequestSchema,
+  forgotPasswordRequestSchema,
+  resetPasswordRequestSchema,
+  refreshTokenRequestSchema
 } from '../schemas/auth.js';
+import passwordResetRepository from '../repositories/passwordResetRepository.js';
+import emailService from './emailService.js';
 
 /**
  * 認証サービスの抽象基底クラス
@@ -321,6 +327,142 @@ export class LocalAuthService extends BaseAuthService {
         message: '全デバイスからログアウトしました' 
       };
     }
+  }
+
+  /**
+   * パスワード変更
+   * @param {number} userId - ユーザーID
+   * @param {Object} passwordData - パスワードデータ
+   * @returns {Promise<Object>} 変更結果
+   */
+  async changePassword(userId, passwordData) {
+    // バリデーション
+    const validatedData = changePasswordRequestSchema.parse(passwordData);
+    
+    // ユーザー取得
+    const user = await this.userRepository.findById(userId);
+    if (!user) {
+      const error = new Error('ユーザーが見つかりません');
+      error.code = 'USER_NOT_FOUND';
+      error.status = 404;
+      throw error;
+    }
+
+    // 現在のパスワード検証
+    const isValidCurrentPassword = await this.verifyPassword(
+      validatedData.currentPassword, 
+      user.passwordHash
+    );
+    if (!isValidCurrentPassword) {
+      const error = new Error('現在のパスワードが正しくありません');
+      error.code = 'INVALID_CURRENT_PASSWORD';
+      error.status = 400;
+      throw error;
+    }
+
+    // 新しいパスワードハッシュ化
+    const newPasswordHash = await this.hashPassword(validatedData.newPassword);
+
+    // パスワード更新
+    await this.userRepository.updatePassword(userId, newPasswordHash);
+
+    // パスワード変更完了メール送信
+    await emailService.sendPasswordChangeConfirmationEmail(user.email, user.name);
+
+    return {
+      success: true,
+      message: 'パスワードが正常に変更されました'
+    };
+  }
+
+  /**
+   * パスワードリセット要求
+   * @param {Object} requestData - リセット要求データ
+   * @returns {Promise<Object>} リセット結果
+   */
+  async forgotPassword(requestData) {
+    // バリデーション
+    const validatedData = forgotPasswordRequestSchema.parse(requestData);
+
+    // ユーザー検索
+    const user = await this.userRepository.findByEmail(validatedData.email);
+    if (!user) {
+      // セキュリティ上の理由で、存在しないメールアドレスでも成功を返す
+      return {
+        success: true,
+        message: 'パスワードリセットメールを送信しました（該当するアカウントが存在する場合）'
+      };
+    }
+
+    // リセットトークン生成
+    const resetToken = await passwordResetRepository.createResetToken(
+      user.id,
+      this.config.passwordResetTokenExpiresIn || 3600
+    );
+
+    // パスワードリセットメール送信
+    const emailSent = await emailService.sendPasswordResetEmail(
+      user.email,
+      resetToken.token,
+      user.name
+    );
+
+    if (!emailSent) {
+      console.error('Failed to send password reset email to:', user.email);
+    }
+
+    return {
+      success: true,
+      message: 'パスワードリセットメールを送信しました（該当するアカウントが存在する場合）'
+    };
+  }
+
+  /**
+   * パスワードリセット実行
+   * @param {Object} resetData - リセットデータ
+   * @returns {Promise<Object>} リセット結果
+   */
+  async resetPassword(resetData) {
+    // バリデーション
+    const validatedData = resetPasswordRequestSchema.parse(resetData);
+
+    // リセットトークン検証
+    const resetToken = await passwordResetRepository.findByToken(validatedData.token);
+    if (!resetToken) {
+      const error = new Error('無効なリセットトークンです');
+      error.code = 'INVALID_RESET_TOKEN';
+      error.status = 400;
+      throw error;
+    }
+
+    // ユーザー取得
+    const user = await this.userRepository.findById(resetToken.userId);
+    if (!user) {
+      const error = new Error('ユーザーが見つかりません');
+      error.code = 'USER_NOT_FOUND';
+      error.status = 404;
+      throw error;
+    }
+
+    // 新しいパスワードハッシュ化
+    const newPasswordHash = await this.hashPassword(validatedData.newPassword);
+
+    // パスワード更新
+    await this.userRepository.updatePassword(user.id, newPasswordHash);
+
+    // リセットトークンを使用済みにマーク
+    await passwordResetRepository.markTokenAsUsed(validatedData.token);
+
+    // 全デバイスからログアウト（セキュリティのため）
+    await this.logoutAllDevices(user.id);
+
+    // パスワード変更完了メール送信
+    await emailService.sendPasswordChangeConfirmationEmail(user.email, user.name);
+
+    return {
+      success: true,
+      message: 'パスワードが正常にリセットされました'
+    };
   }
 
   /**

@@ -261,6 +261,38 @@ export class UserRepository {
   }
 
   /**
+   * パスワード更新
+   * @param {number} id - ユーザーID
+   * @param {string} newPasswordHash - 新しいパスワードハッシュ
+   * @returns {Promise<boolean>} 更新成功かどうか
+   */
+  async updatePassword(id, newPasswordHash) {
+    try {
+      const data = await this._safeRead();
+      const users = data.users || [];
+      const userIndex = users.findIndex(u => u.id === parseInt(id));
+      
+      if (userIndex === -1) {
+        return false;
+      }
+      
+      // パスワードハッシュ更新
+      this.db.data.users[userIndex].passwordHash = newPasswordHash;
+      this.db.data.users[userIndex].updatedAt = new Date().toISOString();
+      
+      await this._safeWrite();
+      
+      return true;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to update password', 500, 'PASSWORD_UPDATE_ERROR', { 
+        userId: id, 
+        originalError: error.message 
+      });
+    }
+  }
+
+  /**
    * 全ユーザー取得（ページネーション対応）
    * @param {Object} options - 検索オプション
    * @returns {Promise<Object>} ユーザー一覧と総数
