@@ -1,7 +1,7 @@
 import corsMiddleware from './cors.js';
 import helmetMiddleware from './helmet.js';
 import morganMiddleware from './morgan.js';
-import openApiMiddleware from './openapi.js';
+import openApiMiddleware, { validateRequest as validateOpenApiRequest } from './openapi.js';
 import errorHandler from './errorHandler.js';
 import requestLogger from './requestLogger.js';
 import { apiLimiter, speedLimiter } from './rateLimiting.js';
@@ -15,6 +15,7 @@ export {
   morganMiddleware,
   requestLogger,
   openApiMiddleware,
+  validateOpenApiRequest,
   errorHandler,
   apiLimiter,
   speedLimiter,

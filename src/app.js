@@ -9,6 +9,7 @@ import {
   errorHandler,
   apiLimiter,
   speedLimiter,
+  openApiMiddleware,
   swaggerMiddleware,
   swaggerServe,
   apiNotFoundHandler,
@@ -75,8 +76,11 @@ app.use(express.urlencoded({
 // Swagger UI
 app.use(config.api.swaggerPath, swaggerServe, swaggerMiddleware);
 
-// API Routes (OpenAPI compliant)
+// API Routes (OpenAPI compliant) - First
 app.use(config.api.basePath, routes);
+
+// OpenAPI validation middleware (Express 5.x compatible) - After routes for validation only
+// app.use(config.api.basePath, openApiMiddleware);
 
 // 404 handler for API routes (Express 5.x compatible syntax)
 app.use('/api/*catchall', apiNotFoundHandler);

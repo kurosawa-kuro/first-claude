@@ -22,7 +22,10 @@
       "Bash(chmod:*)",
       "Bash(./script/setup.sh:*)",
       "Bash(npm run:*)",
-      "Bash(TEST_VERBOSE=true npm run test:verbose -- --testPathPatterns=micropostController)"
+      "Bash(TEST_VERBOSE=true npm run test:verbose -- --testPathPatterns=micropostController)",
+      "Bash(true)",
+      "Bash(npm info:*)",
+      "Bash(npm update:*)"
     ],
     "deny": []
   }
