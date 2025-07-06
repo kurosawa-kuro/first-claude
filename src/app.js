@@ -72,8 +72,8 @@ app.use(express.urlencoded({
   limit: '10mb' 
 }));
 
-// Swagger UI - temporarily disabled due to Express 5.x compatibility issues
-// app.use(config.api.swaggerPath, swaggerServe, swaggerMiddleware);
+// Swagger UI
+app.use(config.api.swaggerPath, swaggerServe, swaggerMiddleware);
 
 // API Routes (OpenAPI compliant)
 app.use(config.api.basePath, routes);
