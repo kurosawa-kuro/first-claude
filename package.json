@@ -1,0 +1,66 @@
+{
+  "name": "first-claude",
+  "version": "1.0.0",
+  "description": "Express API with OpenAPI-driven development",
+  "main": "src/app.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
+    "test:unit": "node --experimental-vm-modules node_modules/.bin/jest test/unit",
+    "test:integration": "node --experimental-vm-modules node_modules/.bin/jest test/integration",
+    "test:e2e": "node --experimental-vm-modules node_modules/.bin/jest test/e2e",
+    "test:coverage": "node --experimental-vm-modules node_modules/.bin/jest --coverage",
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "keywords": [
+    "express",
+    "openapi",
+    "micropost",
+    "api"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "ajv-formats": "^3.0.1",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "express-async-errors": "^3.1.1",
+    "helmet": "^8.1.0",
+    "lowdb": "^7.0.1",
+    "morgan": "^1.10.0",
+    "openapi-backend": "^5.10.6",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0",
+    "zod": "^3.25.74"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "supertest": "^6.3.3"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {},
+    "setupFilesAfterEnv": [
+      "<rootDir>/test/utils/setup.js"
+    ],
+    "testMatch": [
+      "<rootDir>/test/**/*.test.js"
+    ],
+    "collectCoverageFrom": [
+      "src/**/*.js",
+      "!src/server.js",
+      "!**/node_modules/**"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "html"
+    ],
+    "testTimeout": 10000,
+    "verbose": true
+  }
+}

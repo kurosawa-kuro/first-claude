@@ -1,0 +1,103 @@
+openapi: 3.0.3
+info:
+  title: User & Micropost API
+  version: 1.0.0
+paths:
+  /users:
+    get:
+      summary: 全ユーザー取得
+      operationId: getUsers
+      responses:
+        '200':
+          description: 成功時にユーザー配列を返す
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '500':
+          description: サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /users/{userId}/microposts:
+    get:
+      summary: ユーザーの全マイクロポスト取得
+      operationId: getUserMicroposts
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: 成功時に micropost の配列
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Micropost'
+    post:
+      summary: 新規マイクロポスト作成
+      operationId: createUserMicropost
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewMicropost'
+      responses:
+        '201':
+          description: 作成成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Micropost'
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        createdAt:
+          type: string
+          format: date-time
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+    Micropost:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        content:
+          type: string
+    NewMicropost:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string

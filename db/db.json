@@ -1,0 +1,39 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "Alice Johnson",
+      "email": "alice@example.com",
+      "createdAt": "2024-01-15T10:00:00Z"
+    },
+    {
+      "id": 2,
+      "name": "Bob Smith",
+      "email": "bob@example.com",
+      "createdAt": "2024-01-16T14:30:00Z"
+    },
+    {
+      "id": 3,
+      "name": "Charlie Brown",
+      "email": "charlie@example.com",
+      "createdAt": "2024-01-17T09:15:00Z"
+    }
+  ],
+  "microposts": [
+    {
+      "id": 1,
+      "userId": 1,
+      "content": "First micropost for user 1"
+    },
+    {
+      "id": 2,
+      "userId": 1,
+      "content": "Second micropost for user 1"
+    },
+    {
+      "id": 3,
+      "userId": 2,
+      "content": "First micropost for user 2"
+    }
+  ]
+}
