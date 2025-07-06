@@ -5,7 +5,7 @@
   "main": "src/app.js",
   "type": "module",
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --runInBand",
     "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
     "test:unit": "node --experimental-vm-modules node_modules/.bin/jest test/unit",
     "test:integration": "node --experimental-vm-modules node_modules/.bin/jest test/integration",
