@@ -126,7 +126,7 @@ const gracefulShutdown = (signal) => {
   setTimeout(() => {
     console.error('Could not close connections in time, forcefully shutting down');
     process.exit(1);
-  }, 30000);
+  }, 80000);
 };
 
 // Start server only if this file is run directly

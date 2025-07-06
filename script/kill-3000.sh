@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Script to safely terminate processes running on port 3000
-# Usage: ./kill-3000.sh [options]
+# Script to safely terminate processes running on port 8000
+# Usage: ./kill-8000.sh [options]
 
 set -euo pipefail
 
 # Configuration
-readonly PORT="${1:-3000}"
+readonly PORT="${1:-8000}"
 readonly SCRIPT_NAME="$(basename "$0")"
 readonly LOG_PREFIX="[$SCRIPT_NAME]"
 
@@ -37,13 +37,13 @@ Usage: $SCRIPT_NAME [PORT]
 Safely terminate processes running on the specified port.
 
 Arguments:
-    PORT    Port number to check (default: 3000)
+    PORT    Port number to check (default: 8000)
 
 Options:
     -h, --help    Show this help message
 
 Examples:
-    $SCRIPT_NAME           # Kill processes on port 3000
+    $SCRIPT_NAME           # Kill processes on port 8000
     $SCRIPT_NAME 8080      # Kill processes on port 8080
 
 EOF

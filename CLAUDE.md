@@ -132,7 +132,7 @@ build-front:
 
 # Swagger UI 表示
 docs:
-	open http://localhost:3000/api-docs
+	open http://localhost:8000/api-docs
 
 # データベース初期化
 db-seed:

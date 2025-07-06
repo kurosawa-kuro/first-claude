@@ -7,7 +7,7 @@ dotenv.config();
 // Environment validation schema
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
-  PORT: z.coerce.number().default(3000),
+  PORT: z.coerce.number().default(8000),
   
   // Database
   DB_PATH: z.string().default('./db/db.json'),

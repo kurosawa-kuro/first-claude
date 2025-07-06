@@ -208,7 +208,7 @@ describe('End-to-End API Tests', () => {
     it('should handle CORS properly', async () => {
       const response = await request(app)
         .options('/api/v1/users')
-        .set('Origin', 'http://localhost:3000')
+        .set('Origin', 'http://localhost:8000')
         .expect(200);  // Express typically returns 200 for OPTIONS, not 204
 
       // Check CORS headers
