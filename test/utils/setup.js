@@ -29,12 +29,16 @@ beforeAll(async () => {
   process.env.SWAGGER_PATH = '/api-docs';
   
   // Initialize test database or mock data
-  console.log('Setting up test environment...');
+  if (process.env.TEST_VERBOSE === 'true') {
+    console.log('Setting up test environment...');
+  }
 });
 
 afterAll(async () => {
   // Clean up test environment
-  console.log('Cleaning up test environment...');
+  if (process.env.TEST_VERBOSE === 'true') {
+    console.log('Cleaning up test environment...');
+  }
 });
 
 beforeEach(async () => {
@@ -54,17 +58,21 @@ export const testConfig = {
   verbose: true
 };
 
-// Mock console methods in test environment
-if (process.env.NODE_ENV === 'test') {
-  // Only mock console if jest is available
+// Mock console methods in test environment for cleaner output
+if (process.env.NODE_ENV === 'test' && process.env.TEST_SILENT !== 'false') {
+  // Only mock console if jest is available and we want silent tests
   if (typeof jest !== 'undefined') {
+    // Keep original console methods for test output
+    const originalConsole = { ...console };
+    
     global.console = {
       ...console,
-      log: jest.fn(),
-      error: jest.fn(),
-      warn: jest.fn(),
-      info: jest.fn(),
-      debug: jest.fn()
+      // Mock application logs but keep test framework logs
+      log: process.env.TEST_VERBOSE === 'true' ? originalConsole.log : jest.fn(),
+      error: process.env.TEST_VERBOSE === 'true' ? originalConsole.error : jest.fn(),
+      warn: process.env.TEST_VERBOSE === 'true' ? originalConsole.warn : jest.fn(),
+      info: process.env.TEST_VERBOSE === 'true' ? originalConsole.info : jest.fn(),
+      debug: jest.fn() // Always mock debug logs
     };
   }
 }

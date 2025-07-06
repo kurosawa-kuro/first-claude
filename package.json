@@ -5,14 +5,19 @@
   "main": "src/app.js",
   "type": "module",
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/.bin/jest --runInBand",
-    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
-    "test:unit": "node --experimental-vm-modules node_modules/.bin/jest test/unit",
-    "test:integration": "node --experimental-vm-modules node_modules/.bin/jest test/integration",
-    "test:e2e": "node --experimental-vm-modules node_modules/.bin/jest test/e2e",
-    "test:coverage": "node --experimental-vm-modules node_modules/.bin/jest --coverage",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --runInBand --silent",
+    "test:verbose": "node --experimental-vm-modules node_modules/.bin/jest --runInBand --verbose",
+    "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch --silent",
+    "test:unit": "node --experimental-vm-modules node_modules/.bin/jest test/unit --silent",
+    "test:integration": "node --experimental-vm-modules node_modules/.bin/jest test/integration --silent",
+    "test:e2e": "node --experimental-vm-modules node_modules/.bin/jest test/e2e --silent",
+    "test:coverage": "node --experimental-vm-modules node_modules/.bin/jest --coverage --silent",
+    "test:debug": "node --experimental-vm-modules node_modules/.bin/jest --runInBand --verbose --no-cache",
     "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "dev": "nodemon src/app.js",
+    "db:seed": "node db/seed.js",
+    "db:seed:force": "node db/seed.js --force",
+    "setup": "chmod +x script/setup.sh && ./script/setup.sh"
   },
   "keywords": [
     "express",
@@ -66,6 +71,10 @@
       "html"
     ],
     "testTimeout": 10000,
-    "verbose": true
+    "verbose": false,
+    "silent": false,
+    "reporters": [
+      "default"
+    ]
   }
 }

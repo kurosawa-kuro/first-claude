@@ -18,7 +18,10 @@
       "Bash(mkdir:*)",
       "Bash(npm uninstall:*)",
       "Bash(npm start)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(chmod:*)",
+      "Bash(./script/setup.sh:*)",
+      "Bash(npm run:*)"
     ],
     "deny": []
   }
