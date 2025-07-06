@@ -9,7 +9,9 @@
       "Bash(curl:*)",
       "Bash(grep:*)",
       "Bash(rg:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(find:*)",
+      "Bash(npm run test:coverage:*)"
     ],
     "deny": []
   }
