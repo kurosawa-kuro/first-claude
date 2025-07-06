@@ -9,17 +9,19 @@ describe('End-to-End API Tests', () => {
         .get('/users')
         .expect(200);
 
-      expect(usersResponse.body).toBeInstanceOf(Array);
-      expect(usersResponse.body.length).toBeGreaterThan(0);
+      expect(usersResponse.body.success).toBe(true);
+      expect(usersResponse.body.data).toBeInstanceOf(Array);
+      expect(usersResponse.body.data.length).toBeGreaterThan(0);
       
-      const userId = usersResponse.body[0].id;
+      const userId = usersResponse.body.data[0].id;
 
       // 2. Get user's microposts
       const micropostsResponse = await request(app)
         .get(`/users/${userId}/microposts`)
         .expect(200);
 
-      expect(micropostsResponse.body).toBeInstanceOf(Array);
+      expect(micropostsResponse.body.success).toBe(true);
+      expect(micropostsResponse.body.data).toBeInstanceOf(Array);
 
       // 3. Create a new micropost
       const newMicropost = {
@@ -31,16 +33,17 @@ describe('End-to-End API Tests', () => {
         .send(newMicropost)
         .expect(201);
 
-      expect(createResponse.body).toHaveProperty('id');
-      expect(createResponse.body).toHaveProperty('userId', userId);
-      expect(createResponse.body).toHaveProperty('content', newMicropost.content);
+      expect(createResponse.body.success).toBe(true);
+      expect(createResponse.body.data).toHaveProperty('id');
+      expect(createResponse.body.data).toHaveProperty('userId', userId);
+      expect(createResponse.body.data).toHaveProperty('content', newMicropost.content);
 
       // 4. Verify the micropost was created
       const updatedMicropostsResponse = await request(app)
         .get(`/users/${userId}/microposts`)
         .expect(200);
 
-      expect(updatedMicropostsResponse.body.length).toBeGreaterThan(micropostsResponse.body.length);
+      expect(updatedMicropostsResponse.body.data.length).toBeGreaterThan(micropostsResponse.body.data.length);
     });
 
     it('should handle error scenarios gracefully', async () => {
@@ -68,7 +71,7 @@ describe('End-to-End API Tests', () => {
         .get('/api-docs/')
         .expect(200);
 
-      expect(response.text).toContain('Swagger UI');
+      expect(response.text).toContain('API Documentation');
     });
   });
 

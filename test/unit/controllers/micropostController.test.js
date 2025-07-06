@@ -10,10 +10,11 @@ describe('Micropost Controller', () => {
         .get(`/users/${userId}/microposts`)
         .expect(200);
 
-      expect(response.body).toBeInstanceOf(Array);
-      expect(response.body.length).toBeGreaterThan(0);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toBeInstanceOf(Array);
+      expect(response.body.data.length).toBeGreaterThan(0);
       
-      response.body.forEach(micropost => {
+      response.body.data.forEach(micropost => {
         expect(micropost).toHaveProperty('id');
         expect(micropost).toHaveProperty('userId', userId);
         expect(micropost).toHaveProperty('content');
@@ -41,10 +42,11 @@ describe('Micropost Controller', () => {
         .send(newMicropost)
         .expect(201);
 
-      expect(response.body).toHaveProperty('id');
-      expect(response.body).toHaveProperty('userId', userId);
-      expect(response.body).toHaveProperty('content', newMicropost.content);
-      expect(response.body).toHaveProperty('createdAt');
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveProperty('id');
+      expect(response.body.data).toHaveProperty('userId', userId);
+      expect(response.body.data).toHaveProperty('content', newMicropost.content);
+      expect(response.body.data).toHaveProperty('createdAt');
     });
 
     it('should return 400 for empty content', async () => {

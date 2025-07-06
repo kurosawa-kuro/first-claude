@@ -8,18 +8,19 @@ describe('User Controller', () => {
         .get('/users')
         .expect(200);
 
-      expect(response.body).toBeInstanceOf(Array);
-      expect(response.body).toHaveLength(3);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toBeInstanceOf(Array);
+      expect(response.body.data).toHaveLength(3);
       
       // Check structure of first user
-      expect(response.body[0]).toHaveProperty('id');
-      expect(response.body[0]).toHaveProperty('name');
-      expect(response.body[0]).toHaveProperty('email');
-      expect(response.body[0]).toHaveProperty('createdAt');
+      expect(response.body.data[0]).toHaveProperty('id');
+      expect(response.body.data[0]).toHaveProperty('name');
+      expect(response.body.data[0]).toHaveProperty('email');
+      expect(response.body.data[0]).toHaveProperty('createdAt');
       
       // Check specific data
-      expect(response.body[0].name).toBe('Alice Johnson');
-      expect(response.body[0].email).toBe('alice@example.com');
+      expect(response.body.data[0].name).toBe('Alice Johnson');
+      expect(response.body.data[0].email).toBe('alice@example.com');
     });
 
     it('should return users with valid email format', async () => {
@@ -27,7 +28,7 @@ describe('User Controller', () => {
         .get('/users')
         .expect(200);
 
-      response.body.forEach(user => {
+      response.body.data.forEach(user => {
         expect(user.email).toMatch(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);
       });
     });
@@ -37,7 +38,7 @@ describe('User Controller', () => {
         .get('/users')
         .expect(200);
 
-      response.body.forEach(user => {
+      response.body.data.forEach(user => {
         expect(user.createdAt).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
       });
     });
@@ -47,7 +48,7 @@ describe('User Controller', () => {
         .get('/users')
         .expect(200);
 
-      response.body.forEach(user => {
+      response.body.data.forEach(user => {
         expect(user.id).toBeGreaterThan(0);
         expect(Number.isInteger(user.id)).toBe(true);
       });
@@ -58,7 +59,7 @@ describe('User Controller', () => {
         .get('/users')
         .expect(200);
 
-      response.body.forEach(user => {
+      response.body.data.forEach(user => {
         expect(user.name).toBeTruthy();
         expect(user.name.length).toBeGreaterThan(0);
       });
