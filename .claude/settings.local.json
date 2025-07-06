@@ -4,7 +4,18 @@
       "Bash(npm test)",
       "Bash(npm install:*)",
       "Bash(pkill:*)",
-      "Bash(npm test:*)"
+      "Bash(npm test:*)",
+      "Bash(node:*)",
+      "Bash(curl:*)",
+      "Bash(grep:*)",
+      "Bash(rg:*)",
+      "Bash(mv:*)",
+      "Bash(find:*)",
+      "Bash(npm run test:coverage:*)",
+      "Bash(npm audit:*)",
+      "Bash(ls:*)",
+      "Bash(npm outdated)",
+      "Bash(mkdir:*)"
     ],
     "deny": []
   }

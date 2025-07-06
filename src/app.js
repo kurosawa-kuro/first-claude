@@ -1,10 +1,6 @@
 import express from 'express';
 import 'express-async-errors';
 import compression from 'compression';
-import YAML from 'yamljs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import swaggerUi from 'swagger-ui-express';
 import routes from './routes/index.js';
 import config from './config/index.js';
 import {
@@ -13,14 +9,13 @@ import {
   requestLogger,
   errorHandler,
   apiLimiter,
-  speedLimiter
+  speedLimiter,
+  swaggerMiddleware,
+  swaggerServe,
+  apiNotFoundHandler,
+  globalNotFoundHandler
 } from './middlewares/index.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load OpenAPI definition
-const apiDefinition = YAML.load(path.resolve(__dirname, '../openapi/api.yaml'));
 
 // Create Express app
 const app = express();
@@ -57,9 +52,11 @@ app.use(compression({
 app.use(helmetMiddleware);
 app.use(corsMiddleware);
 
-// Rate limiting (apply to API routes only)
+// Rate limiting (apply to API routes in all environments for security)
+// セキュリティ向上: 開発環境でもレート制限を有効化
+app.use('/api', apiLimiter);
 if (config.isProduction) {
-  app.use('/api', apiLimiter);
+  // 本番環境では追加でspeedLimiterも適用
   app.use('/api', speedLimiter);
 }
 
@@ -77,38 +74,16 @@ app.use(express.urlencoded({
 }));
 
 // Swagger UI
-app.use(config.api.swaggerPath, swaggerUi.serve, swaggerUi.setup(apiDefinition, {
-  explorer: true,
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'API Documentation'
-}));
+app.use(config.api.swaggerPath, swaggerServe, swaggerMiddleware);
 
 // API Routes (OpenAPI compliant)
 app.use(config.api.basePath, routes);
 
 // 404 handler for API routes
-app.use('/api/*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    error: {
-      code: 'ENDPOINT_NOT_FOUND',
-      message: `API endpoint ${req.method} ${req.path} not found`,
-      timestamp: new Date().toISOString()
-    }
-  });
-});
+app.use('/api/*', apiNotFoundHandler);
 
 // 404 handler for all other routes
-app.use('*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    error: {
-      code: 'ROUTE_NOT_FOUND',
-      message: 'The requested resource was not found',
-      timestamp: new Date().toISOString()
-    }
-  });
-});
+app.use('*', globalNotFoundHandler);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

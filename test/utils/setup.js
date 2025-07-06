@@ -5,6 +5,28 @@ beforeAll(async () => {
   // Set test environment variables
   process.env.NODE_ENV = 'test';
   process.env.PORT = '3001';
+  process.env.DB_PATH = './test/db/test.json';
+  
+  // JWT configuration for tests
+  process.env.JWT_SECRET = 'test-super-secure-32-character-secret-key-for-testing-12345678';
+  process.env.JWT_EXPIRES_IN = '3600';
+  process.env.JWT_REFRESH_EXPIRES_IN = '604800';
+  
+  // Password configuration
+  process.env.BCRYPT_ROUNDS = '4'; // Lower rounds for faster tests
+  
+  // Email configuration (mock)
+  process.env.FROM_EMAIL = 'test@example.com';
+  
+  // Rate limiting (relaxed for tests)
+  process.env.RATE_LIMIT_WINDOW_MS = '60000';
+  process.env.RATE_LIMIT_MAX_REQUESTS = '1000';
+  process.env.AUTH_RATE_LIMIT_WINDOW_MS = '60000';
+  process.env.AUTH_RATE_LIMIT_MAX_REQUESTS = '100';
+  
+  // API Configuration
+  process.env.API_BASE_PATH = '/api/v1';
+  process.env.SWAGGER_PATH = '/api-docs';
   
   // Initialize test database or mock data
   console.log('Setting up test environment...');

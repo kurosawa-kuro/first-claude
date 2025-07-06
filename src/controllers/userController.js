@@ -1,6 +1,6 @@
 import { UserArraySchema, UserQueryParamsSchema, UserParamsSchema, UserListResponseSchema, UserDetailResponseSchema } from '../schemas/user.js';
 import { getUsersFromDB, getUserByIdFromDB } from '../services/userService.js';
-import { getMicropostsByUserId } from '../services/micropostService.js';
+import { getMicropostCountByUserId, getMicropostsByUserId } from '../services/micropostService.js';
 import { handleAsyncError, ValidationError, NotFoundError } from '../utils/errors.js';
 
 export const getUsers = handleAsyncError(async (req, res) => {
@@ -36,10 +36,12 @@ export const getUsers = handleAsyncError(async (req, res) => {
   const paginatedUsers = users.slice(offset, offset + limit);
   
   // Add micropost counts to users
-  const usersWithCounts = paginatedUsers.map(user => ({
-    ...user,
-    micropostCount: getMicropostsByUserId(user.id).length
-  }));
+  const usersWithCounts = await Promise.all(
+    paginatedUsers.map(async user => ({
+      ...user,
+      micropostCount: await getMicropostCountByUserId(user.id)
+    }))
+  );
   
   // Validate response data
   const validatedUsers = UserArraySchema.parse(usersWithCounts);
@@ -67,7 +69,7 @@ export const getUserById = handleAsyncError(async (req, res) => {
   }
   
   // Get recent microposts (max 5)
-  const userMicroposts = getMicropostsByUserId(userId);
+  const userMicroposts = await getMicropostsByUserId(userId);
   const recentMicroposts = userMicroposts
     .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
     .slice(0, 5)
@@ -79,7 +81,7 @@ export const getUserById = handleAsyncError(async (req, res) => {
   
   const userDetail = {
     ...user,
-    micropostCount: userMicroposts.length,
+    micropostCount: await getMicropostCountByUserId(userId),
     recentMicroposts
   };
   

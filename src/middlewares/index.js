@@ -6,6 +6,8 @@ import errorHandler from './errorHandler.js';
 import requestLogger from './requestLogger.js';
 import { apiLimiter, speedLimiter } from './rateLimiting.js';
 import { validateRequest } from './validation.js';
+import { swaggerMiddleware, swaggerServe } from './swagger.js';
+import { apiNotFoundHandler, globalNotFoundHandler } from './notFoundHandler.js';
 
 export {
   corsMiddleware,
@@ -16,5 +18,9 @@ export {
   errorHandler,
   apiLimiter,
   speedLimiter,
-  validateRequest
+  validateRequest,
+  swaggerMiddleware,
+  swaggerServe,
+  apiNotFoundHandler,
+  globalNotFoundHandler
 };

@@ -5,7 +5,7 @@
   "main": "src/app.js",
   "type": "module",
   "scripts": {
-    "test": "node --experimental-vm-modules node_modules/.bin/jest",
+    "test": "node --experimental-vm-modules node_modules/.bin/jest --runInBand",
     "test:watch": "node --experimental-vm-modules node_modules/.bin/jest --watch",
     "test:unit": "node --experimental-vm-modules node_modules/.bin/jest test/unit",
     "test:integration": "node --experimental-vm-modules node_modules/.bin/jest test/integration",
@@ -24,6 +24,7 @@
   "license": "MIT",
   "dependencies": {
     "ajv-formats": "^3.0.1",
+    "bcrypt": "^6.0.0",
     "compression": "^1.8.0",
     "cors": "^2.8.5",
     "dotenv": "^17.0.1",
@@ -32,6 +33,7 @@
     "express-rate-limit": "^7.5.1",
     "express-slow-down": "^2.1.0",
     "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.2",
     "lowdb": "^7.0.1",
     "morgan": "^1.10.0",
     "openapi-backend": "^5.10.6",

@@ -14,7 +14,7 @@ export const getUserMicroposts = handleAsyncError(async (req, res) => {
     throw new NotFoundError('User');
   }
   
-  let userMicroposts = getMicropostsByUserId(userId);
+  let userMicroposts = await getMicropostsByUserId(userId);
   
   // Date filtering
   if (since) {
@@ -37,11 +37,11 @@ export const getUserMicroposts = handleAsyncError(async (req, res) => {
   const enrichedMicroposts = paginatedMicroposts.map(post => ({
     ...post,
     contentLength: post.content.length,
-    user: {
+    user: user ? {
       id: user.id,
       name: user.name,
       email: user.email
-    }
+    } : null
   }));
   
   const response = {
@@ -54,7 +54,7 @@ export const getUserMicroposts = handleAsyncError(async (req, res) => {
     },
     meta: {
       userId: userId,
-      userName: user.name
+      userName: user ? user.name : null
     }
   };
   
@@ -72,17 +72,17 @@ export const createUserMicropost = handleAsyncError(async (req, res) => {
     throw new NotFoundError('User');
   }
   
-  const newMicropost = createMicropost(userId, content);
+  const newMicropost = await createMicropost(userId, content);
   
   // Add user info and contentLength
   const enrichedMicropost = {
     ...newMicropost,
     contentLength: newMicropost.content.length,
-    user: {
+    user: user ? {
       id: user.id,
       name: user.name,
       email: user.email
-    }
+    } : null
   };
   
   const response = {
@@ -96,7 +96,7 @@ export const getAllMicropostsController = handleAsyncError(async (req, res) => {
   // Validate query parameters
   const { page, limit, search } = MicropostQueryParamsSchema.parse(req.query);
   
-  let microposts = getAllMicroposts();
+  let microposts = await getAllMicroposts();
   
   // Search functionality
   if (search) {
@@ -122,11 +122,11 @@ export const getAllMicropostsController = handleAsyncError(async (req, res) => {
       return {
         ...post,
         contentLength: post.content.length,
-        user: {
+        user: user ? {
           id: user.id,
           name: user.name,
           email: user.email
-        }
+        } : null
       };
     })
   );
@@ -148,7 +148,7 @@ export const getMicropostByIdController = handleAsyncError(async (req, res) => {
   // Validate path parameters
   const { micropostId } = MicropostIdParamsSchema.parse(req.params);
   
-  const micropost = getMicropostById(micropostId);
+  const micropost = await getMicropostById(micropostId);
   if (!micropost) {
     throw new NotFoundError('Micropost');
   }
@@ -163,11 +163,11 @@ export const getMicropostByIdController = handleAsyncError(async (req, res) => {
   const enrichedMicropost = {
     ...micropost,
     contentLength: micropost.content.length,
-    user: {
+    user: user ? {
       id: user.id,
       name: user.name,
       email: user.email
-    }
+    } : null
   };
   
   const response = {
