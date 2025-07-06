@@ -1,5 +1,4 @@
 import express from 'express';
-import 'express-async-errors';
 import compression from 'compression';
 import routes from './routes/index.js';
 import config from './config/index.js';
@@ -73,17 +72,17 @@ app.use(express.urlencoded({
   limit: '10mb' 
 }));
 
-// Swagger UI
-app.use(config.api.swaggerPath, swaggerServe, swaggerMiddleware);
+// Swagger UI - temporarily disabled due to Express 5.x compatibility issues
+// app.use(config.api.swaggerPath, swaggerServe, swaggerMiddleware);
 
 // API Routes (OpenAPI compliant)
 app.use(config.api.basePath, routes);
 
-// 404 handler for API routes
-app.use('/api/*', apiNotFoundHandler);
+// 404 handler for API routes (Express 5.x compatible syntax)
+app.use('/api/*catchall', apiNotFoundHandler);
 
-// 404 handler for all other routes
-app.use('*', globalNotFoundHandler);
+// 404 handler for all other routes (Express 5.x compatible syntax)
+app.use('/*catchall', globalNotFoundHandler);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

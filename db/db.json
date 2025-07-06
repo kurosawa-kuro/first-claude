@@ -213,6 +213,78 @@
       "userId": 1,
       "content": "This is a test micropost",
       "createdAt": "2025-07-06T12:57:12.506Z"
+    },
+    {
+      "id": 29,
+      "userId": 1,
+      "content": "Test micropost content for OpenAPI validation",
+      "createdAt": "2025-07-06T12:58:34.116Z"
+    },
+    {
+      "id": 30,
+      "userId": 3,
+      "content": "End-to-end test micropost according to OpenAPI specification",
+      "createdAt": "2025-07-06T12:58:34.890Z"
+    },
+    {
+      "id": 31,
+      "userId": 1,
+      "content": "This is a test micropost",
+      "createdAt": "2025-07-06T12:58:35.839Z"
+    },
+    {
+      "id": 32,
+      "userId": 1,
+      "content": "This is a test micropost",
+      "createdAt": "2025-07-06T13:09:01.017Z"
+    },
+    {
+      "id": 33,
+      "userId": 1,
+      "content": "Test micropost content for OpenAPI validation",
+      "createdAt": "2025-07-06T13:09:03.809Z"
+    },
+    {
+      "id": 34,
+      "userId": 3,
+      "content": "End-to-end test micropost according to OpenAPI specification",
+      "createdAt": "2025-07-06T13:09:04.051Z"
+    },
+    {
+      "id": 35,
+      "userId": 3,
+      "content": "End-to-end test micropost according to OpenAPI specification",
+      "createdAt": "2025-07-06T13:12:11.215Z"
+    },
+    {
+      "id": 36,
+      "userId": 1,
+      "content": "Test micropost content for OpenAPI validation",
+      "createdAt": "2025-07-06T13:12:14.170Z"
+    },
+    {
+      "id": 37,
+      "userId": 1,
+      "content": "This is a test micropost",
+      "createdAt": "2025-07-06T13:12:14.635Z"
+    },
+    {
+      "id": 38,
+      "userId": 3,
+      "content": "End-to-end test micropost according to OpenAPI specification",
+      "createdAt": "2025-07-06T13:14:06.650Z"
+    },
+    {
+      "id": 39,
+      "userId": 1,
+      "content": "Test micropost content for OpenAPI validation",
+      "createdAt": "2025-07-06T13:14:10.647Z"
+    },
+    {
+      "id": 40,
+      "userId": 1,
+      "content": "This is a test micropost",
+      "createdAt": "2025-07-06T13:14:10.871Z"
     }
   ]
 }

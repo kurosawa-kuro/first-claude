@@ -15,7 +15,10 @@
       "Bash(npm audit:*)",
       "Bash(ls:*)",
       "Bash(npm outdated)",
-      "Bash(mkdir:*)"
+      "Bash(mkdir:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(npm start)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }
