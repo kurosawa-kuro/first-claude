@@ -1,10 +1,6 @@
 import express from 'express';
 import 'express-async-errors';
 import compression from 'compression';
-import YAML from 'yamljs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import swaggerUi from 'swagger-ui-express';
 import routes from './routes/index.js';
 import config from './config/index.js';
 import {
@@ -13,14 +9,11 @@ import {
   requestLogger,
   errorHandler,
   apiLimiter,
-  speedLimiter
+  speedLimiter,
+  swaggerMiddleware,
+  swaggerServe
 } from './middlewares/index.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Load OpenAPI definition
-const apiDefinition = YAML.load(path.resolve(__dirname, '../openapi/api.yaml'));
 
 // Create Express app
 const app = express();
@@ -77,11 +70,7 @@ app.use(express.urlencoded({
 }));
 
 // Swagger UI
-app.use(config.api.swaggerPath, swaggerUi.serve, swaggerUi.setup(apiDefinition, {
-  explorer: true,
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'API Documentation'
-}));
+app.use(config.api.swaggerPath, swaggerServe, swaggerMiddleware);
 
 // API Routes (OpenAPI compliant)
 app.use(config.api.basePath, routes);
