@@ -1,11 +1,20 @@
 import { beforeAll, afterAll, beforeEach, afterEach } from '@jest/globals';
+import fs from 'fs/promises';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Global test setup
 beforeAll(async () => {
   // Set test environment variables
   process.env.NODE_ENV = 'test';
   process.env.PORT = '3001';
-  process.env.DB_PATH = './test/db/test.json';
+  
+  // Use unique database file for each test worker to prevent conflicts
+  const workerId = process.env.JEST_WORKER_ID || '0';
+  process.env.DB_PATH = `./test/db/test-${workerId}.json`;
   
   // JWT configuration for tests
   process.env.JWT_SECRET = 'test-super-secure-32-character-secret-key-for-testing-12345678';
@@ -28,7 +37,9 @@ beforeAll(async () => {
   process.env.API_BASE_PATH = '/api/v1';
   process.env.SWAGGER_PATH = '/api-docs';
   
-  // Initialize test database or mock data
+  // Initialize test database with fixture data
+  await initializeTestDatabase();
+  
   if (process.env.TEST_VERBOSE === 'true') {
     console.log('Setting up test environment...');
   }
@@ -43,7 +54,9 @@ afterAll(async () => {
 
 beforeEach(async () => {
   // Reset test data before each test
-  // This would reset the database or mock data
+  // Add delay to prevent race conditions in parallel test execution
+  await new Promise(resolve => setTimeout(resolve, 50));
+  await initializeTestDatabase();
 });
 
 afterEach(async () => {
@@ -74,5 +87,68 @@ if (process.env.NODE_ENV === 'test' && process.env.TEST_SILENT !== 'false') {
       info: process.env.TEST_VERBOSE === 'true' ? originalConsole.info : jest.fn(),
       debug: jest.fn() // Always mock debug logs
     };
+  }
+}
+
+// Initialize test database with fixture data
+async function initializeTestDatabase() {
+  try {
+    const workerId = process.env.JEST_WORKER_ID || '0';
+    const testDbPath = path.resolve(__dirname, `../db/test-${workerId}.json`);
+    const usersFixturePath = path.resolve(__dirname, '../fixtures/users.json');
+    const micropostsFixturePath = path.resolve(__dirname, '../fixtures/microposts.json');
+    
+    // Load fixture data
+    const users = JSON.parse(await fs.readFile(usersFixturePath, 'utf8'));
+    const microposts = JSON.parse(await fs.readFile(micropostsFixturePath, 'utf8'));
+    
+    // Add required fields to users for testing
+    const enhancedUsers = users.map(user => ({
+      ...user,
+      bio: "Test user bio",
+      location: "Test location",
+      website: "https://test.example.com",
+      roles: ["user"],
+      updatedAt: user.createdAt,
+      passwordHash: "$2b$04$test.hash.for.testing.purposes.only" // Low bcrypt rounds for testing
+    }));
+    
+    // Create test database structure
+    const testData = {
+      users: enhancedUsers,
+      microposts: microposts,
+      passwordResetTokens: [],
+      refreshTokens: [],
+      tokenBlacklist: []
+    };
+    
+    // Ensure directory exists
+    await fs.mkdir(path.dirname(testDbPath), { recursive: true });
+    
+    // Write test data to test database atomically
+    const tempPath = `${testDbPath}.tmp`;
+    await fs.writeFile(tempPath, JSON.stringify(testData, null, 2));
+    await fs.rename(tempPath, testDbPath);
+    
+    // Force repository instances to reinitialize with new database path
+    try {
+      const { reinitializeRepository: reinitializeMicropost } = await import('../../src/services/micropostService.js');
+      const { reinitializeRepository: reinitializeUser } = await import('../../src/services/userService.js');
+      
+      await reinitializeMicropost();
+      await reinitializeUser();
+    } catch (error) {
+      // Ignore errors if repositories don't support reinitialize yet
+      if (process.env.TEST_VERBOSE === 'true') {
+        console.log('Warning: Could not reinitialize repositories:', error.message);
+      }
+    }
+    
+    if (process.env.TEST_VERBOSE === 'true') {
+      console.log(`Test database initialized with ${users.length} users and ${microposts.length} microposts`);
+    }
+  } catch (error) {
+    console.error('Failed to initialize test database:', error);
+    throw error;
   }
 }

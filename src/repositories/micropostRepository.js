@@ -1,6 +1,7 @@
 import { Low } from 'lowdb';
 import { JSONFile } from 'lowdb/node';
 import { AppError } from '../utils/errors.js';
+import { config } from '../config/index.js';
 
 /**
  * Micropost Repository
@@ -9,9 +10,20 @@ import { AppError } from '../utils/errors.js';
  */
 class MicropostRepository {
   constructor() {
-    const adapter = new JSONFile('./db/db.json');
+    const adapter = new JSONFile(config.database.path);
     this.db = new Low(adapter, { microposts: [] });
     this.initialized = false;
+  }
+
+  /**
+   * Force reinitialize database connection (for testing)
+   * @public
+   */
+  async reinitialize() {
+    const adapter = new JSONFile(config.database.path);
+    this.db = new Low(adapter, { microposts: [] });
+    this.initialized = false;
+    await this._ensureInitialized();
   }
 
   /**

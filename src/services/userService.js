@@ -64,3 +64,11 @@ export const updateUser = async (id, updateData) => {
 export const deleteUser = async (id) => {
   return await userRepository.delete(id);
 };
+
+/**
+ * リポジトリを再初期化（テスト用）
+ * @returns {Promise<void>}
+ */
+export const reinitializeRepository = async () => {
+  return await userRepository.reinitialize();
+};

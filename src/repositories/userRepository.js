@@ -21,6 +21,17 @@ export class UserRepository {
   }
 
   /**
+   * Force reinitialize database connection (for testing)
+   * @public
+   */
+  async reinitialize() {
+    const adapter = new JSONFile(config.database.path);
+    this.db = new Low(adapter, {});
+    this.initialized = false;
+    await this._ensureInitialized();
+  }
+
+  /**
    * データベース初期化
    * @private
    */

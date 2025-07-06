@@ -1,6 +1,14 @@
 import micropostRepository from '../repositories/micropostRepository.js';
 
 /**
+ * Force reinitialize repository for testing
+ * @returns {Promise<void>}
+ */
+export const reinitializeRepository = async () => {
+  await micropostRepository.reinitialize();
+};
+
+/**
  * Micropost Service
  * マイクロポストのビジネスロジック層
  * 非同期パターンに統一
