@@ -287,10 +287,8 @@ export function extractTokenFromRequest(req) {
     return extractTokenFromAuthHeader(authHeader);
   }
   
-  // クエリパラメータから抽出（非推奨だが一応サポート）
-  if (req.query.token) {
-    return req.query.token;
-  }
+  // セキュリティ向上: クエリパラメータからのトークン取得を削除
+  // クエリパラメータはサーバーログに記録される可能性があるため削除
   
   return null;
 }

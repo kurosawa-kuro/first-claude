@@ -74,37 +74,73 @@
       "id": 5,
       "userId": 1,
       "content": "This is a test micropost",
-      "createdAt": "2025-07-06T10:23:36.102Z"
+      "createdAt": "2025-07-06T11:53:59.994Z"
     },
     {
       "id": 6,
       "userId": 1,
       "content": "Test micropost content for OpenAPI validation",
-      "createdAt": "2025-07-06T10:23:40.094Z"
+      "createdAt": "2025-07-06T11:54:03.123Z"
     },
     {
       "id": 7,
       "userId": 3,
       "content": "End-to-end test micropost according to OpenAPI specification",
-      "createdAt": "2025-07-06T10:23:40.720Z"
+      "createdAt": "2025-07-06T11:54:03.714Z"
     },
     {
       "id": 8,
       "userId": 1,
-      "content": "This is a test micropost",
-      "createdAt": "2025-07-06T10:24:02.115Z"
+      "content": "Test micropost content for OpenAPI validation",
+      "createdAt": "2025-07-06T11:54:54.478Z"
     },
     {
       "id": 9,
-      "userId": 1,
-      "content": "Test micropost content for OpenAPI validation",
-      "createdAt": "2025-07-06T10:24:03.074Z"
+      "userId": 3,
+      "content": "End-to-end test micropost according to OpenAPI specification",
+      "createdAt": "2025-07-06T11:54:55.688Z"
     },
     {
       "id": 10,
+      "userId": 1,
+      "content": "This is a test micropost",
+      "createdAt": "2025-07-06T11:54:56.449Z"
+    },
+    {
+      "id": 11,
+      "userId": 1,
+      "content": "Test micropost content for OpenAPI validation",
+      "createdAt": "2025-07-06T11:56:58.103Z"
+    },
+    {
+      "id": 12,
       "userId": 3,
       "content": "End-to-end test micropost according to OpenAPI specification",
-      "createdAt": "2025-07-06T10:24:03.685Z"
+      "createdAt": "2025-07-06T11:56:58.721Z"
+    },
+    {
+      "id": 13,
+      "userId": 1,
+      "content": "This is a test micropost",
+      "createdAt": "2025-07-06T11:56:59.480Z"
+    },
+    {
+      "id": 14,
+      "userId": 1,
+      "content": "Test micropost content for OpenAPI validation",
+      "createdAt": "2025-07-06T12:05:06.215Z"
+    },
+    {
+      "id": 15,
+      "userId": 3,
+      "content": "End-to-end test micropost according to OpenAPI specification",
+      "createdAt": "2025-07-06T12:05:06.776Z"
+    },
+    {
+      "id": 16,
+      "userId": 1,
+      "content": "This is a test micropost",
+      "createdAt": "2025-07-06T12:05:07.514Z"
     }
   ]
 }

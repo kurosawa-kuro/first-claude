@@ -11,7 +11,9 @@ import {
   apiLimiter,
   speedLimiter,
   swaggerMiddleware,
-  swaggerServe
+  swaggerServe,
+  apiNotFoundHandler,
+  globalNotFoundHandler
 } from './middlewares/index.js';
 
 
@@ -50,9 +52,11 @@ app.use(compression({
 app.use(helmetMiddleware);
 app.use(corsMiddleware);
 
-// Rate limiting (apply to API routes only)
+// Rate limiting (apply to API routes in all environments for security)
+// セキュリティ向上: 開発環境でもレート制限を有効化
+app.use('/api', apiLimiter);
 if (config.isProduction) {
-  app.use('/api', apiLimiter);
+  // 本番環境では追加でspeedLimiterも適用
   app.use('/api', speedLimiter);
 }
 
@@ -76,28 +80,10 @@ app.use(config.api.swaggerPath, swaggerServe, swaggerMiddleware);
 app.use(config.api.basePath, routes);
 
 // 404 handler for API routes
-app.use('/api/*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    error: {
-      code: 'ENDPOINT_NOT_FOUND',
-      message: `API endpoint ${req.method} ${req.path} not found`,
-      timestamp: new Date().toISOString()
-    }
-  });
-});
+app.use('/api/*', apiNotFoundHandler);
 
 // 404 handler for all other routes
-app.use('*', (req, res) => {
-  res.status(404).json({
-    success: false,
-    error: {
-      code: 'ROUTE_NOT_FOUND',
-      message: 'The requested resource was not found',
-      timestamp: new Date().toISOString()
-    }
-  });
-});
+app.use('*', globalNotFoundHandler);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

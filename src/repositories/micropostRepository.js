@@ -1,232 +1,348 @@
-import { LowSync } from 'lowdb';
-import { JSONFileSync } from 'lowdb/node';
+import { Low } from 'lowdb';
+import { JSONFile } from 'lowdb/node';
+import { AppError } from '../utils/errors.js';
 
 /**
  * Micropost Repository
  * lowdb を使用した マイクロポスト データアクセス層
+ * 非同期パターンに統一し、エラーハンドリングを標準化
  */
 class MicropostRepository {
   constructor() {
-    const adapter = new JSONFileSync('./db/db.json');
-    this.db = new LowSync(adapter, { microposts: [] });
-    this.db.read();
+    const adapter = new JSONFile('./db/db.json');
+    this.db = new Low(adapter, { microposts: [] });
+    this.initialized = false;
+  }
 
-    // デフォルトデータがない場合の初期化
-    if (!this.db.data) {
-      this.db.data = { microposts: [] };
-      this.db.write();
+  /**
+   * データベース初期化
+   * @private
+   */
+  async _ensureInitialized() {
+    if (!this.initialized) {
+      try {
+        await this.db.read();
+        
+        // デフォルトデータがない場合の初期化
+        if (!this.db.data) {
+          this.db.data = { microposts: [] };
+          await this.db.write();
+        }
+        if (!this.db.data.microposts) {
+          this.db.data.microposts = [];
+          await this.db.write();
+        }
+        
+        this.initialized = true;
+      } catch (error) {
+        throw new AppError('Database initialization failed', 500, 'DATABASE_ERROR', { 
+          originalError: error.message 
+        });
+      }
     }
-    if (!this.db.data.microposts) {
-      this.db.data.microposts = [];
-      this.db.write();
+  }
+
+  /**
+   * データベース読み取りの安全な実行
+   * @private
+   */
+  async _safeRead() {
+    try {
+      await this._ensureInitialized();
+      await this.db.read();
+      return this.db.data.microposts || [];
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Database read failed', 500, 'DATABASE_READ_ERROR', { 
+        originalError: error.message 
+      });
+    }
+  }
+
+  /**
+   * データベース書き込みの安全な実行
+   * @private
+   */
+  async _safeWrite() {
+    try {
+      await this.db.write();
+    } catch (error) {
+      throw new AppError('Database write failed', 500, 'DATABASE_WRITE_ERROR', { 
+        originalError: error.message 
+      });
     }
   }
 
   /**
    * 全てのマイクロポストを取得
-   * @returns {Array} マイクロポスト配列
+   * @returns {Promise<Array>} マイクロポスト配列
    */
-  findAll() {
-    this.db.read();
-    return this.db.data.microposts || [];
+  async findAll() {
+    return await this._safeRead();
   }
 
   /**
    * IDでマイクロポストを取得
    * @param {number} id - マイクロポストID
-   * @returns {Object|null} マイクロポスト情報またはnull
+   * @returns {Promise<Object|null>} マイクロポスト情報またはnull
    */
-  findById(id) {
-    this.db.read();
-    const microposts = this.db.data.microposts || [];
-    return microposts.find(post => post.id === parseInt(id, 10)) || null;
+  async findById(id) {
+    try {
+      const microposts = await this._safeRead();
+      const micropost = microposts.find(post => post.id === parseInt(id, 10));
+      return micropost || null;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to find micropost by ID', 500, 'MICROPOST_FIND_ERROR', { 
+        micropostId: id, 
+        originalError: error.message 
+      });
+    }
   }
 
   /**
    * ユーザーIDでマイクロポストを取得
    * @param {number} userId - ユーザーID
-   * @returns {Array} マイクロポスト配列
+   * @returns {Promise<Array>} マイクロポスト配列
    */
-  findByUserId(userId) {
-    this.db.read();
-    const microposts = this.db.data.microposts || [];
-    return microposts.filter(post => post.userId === parseInt(userId, 10));
+  async findByUserId(userId) {
+    try {
+      const microposts = await this._safeRead();
+      return microposts.filter(post => post.userId === parseInt(userId, 10));
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to find microposts by user ID', 500, 'MICROPOST_FIND_BY_USER_ERROR', { 
+        userId, 
+        originalError: error.message 
+      });
+    }
   }
 
   /**
    * 新しいマイクロポストを作成
    * @param {Object} micropostData - マイクロポストデータ
-   * @returns {Object} 作成されたマイクロポスト
+   * @returns {Promise<Object>} 作成されたマイクロポスト
    */
-  create(micropostData) {
-    this.db.read();
-    const microposts = this.db.data.microposts || [];
-    
-    // 新しいIDを生成
-    const maxId = microposts.length > 0 ? Math.max(...microposts.map(p => p.id)) : 0;
-    const newId = maxId + 1;
+  async create(micropostData) {
+    try {
+      // バリデーション
+      if (!micropostData || !micropostData.content || !micropostData.userId) {
+        throw new AppError('Required micropost data is missing', 400, 'INVALID_MICROPOST_DATA', { 
+          receivedData: micropostData 
+        });
+      }
 
-    const newMicropost = {
-      id: newId,
-      userId: parseInt(micropostData.userId, 10),
-      content: micropostData.content.trim(),
-      createdAt: new Date().toISOString(),
-      ...micropostData
-    };
+      const microposts = await this._safeRead();
+      
+      // 新しいIDを生成
+      const maxId = microposts.length > 0 ? Math.max(...microposts.map(p => p.id)) : 0;
+      const newId = maxId + 1;
 
-    microposts.push(newMicropost);
-    this.db.data.microposts = microposts;
-    this.db.write();
+      const newMicropost = {
+        id: newId,
+        userId: parseInt(micropostData.userId, 10),
+        content: micropostData.content.trim(),
+        createdAt: new Date().toISOString(),
+        ...micropostData
+      };
 
-    return newMicropost;
+      microposts.push(newMicropost);
+      this.db.data.microposts = microposts;
+      await this._safeWrite();
+
+      return newMicropost;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to create micropost', 500, 'MICROPOST_CREATE_ERROR', { 
+        micropostData, 
+        originalError: error.message 
+      });
+    }
   }
 
   /**
    * マイクロポストを更新
    * @param {number} id - マイクロポストID
    * @param {Object} updateData - 更新データ
-   * @returns {Object|null} 更新されたマイクロポストまたはnull
+   * @returns {Promise<Object|null>} 更新されたマイクロポストまたはnull
    */
-  update(id, updateData) {
-    this.db.read();
-    const microposts = this.db.data.microposts || [];
-    const index = microposts.findIndex(post => post.id === parseInt(id, 10));
+  async update(id, updateData) {
+    try {
+      const microposts = await this._safeRead();
+      const index = microposts.findIndex(post => post.id === parseInt(id, 10));
 
-    if (index === -1) {
-      return null;
+      if (index === -1) {
+        return null;
+      }
+
+      microposts[index] = {
+        ...microposts[index],
+        ...updateData,
+        updatedAt: new Date().toISOString()
+      };
+
+      this.db.data.microposts = microposts;
+      await this._safeWrite();
+
+      return microposts[index];
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to update micropost', 500, 'MICROPOST_UPDATE_ERROR', { 
+        micropostId: id, 
+        updateData, 
+        originalError: error.message 
+      });
     }
-
-    microposts[index] = {
-      ...microposts[index],
-      ...updateData,
-      updatedAt: new Date().toISOString()
-    };
-
-    this.db.data.microposts = microposts;
-    this.db.write();
-
-    return microposts[index];
   }
 
   /**
    * マイクロポストを削除
    * @param {number} id - マイクロポストID
-   * @returns {boolean} 削除成功の可否
+   * @returns {Promise<boolean>} 削除成功の可否
    */
-  delete(id) {
-    this.db.read();
-    const microposts = this.db.data.microposts || [];
-    const index = microposts.findIndex(post => post.id === parseInt(id, 10));
+  async delete(id) {
+    try {
+      const microposts = await this._safeRead();
+      const index = microposts.findIndex(post => post.id === parseInt(id, 10));
 
-    if (index === -1) {
-      return false;
+      if (index === -1) {
+        return false;
+      }
+
+      microposts.splice(index, 1);
+      this.db.data.microposts = microposts;
+      await this._safeWrite();
+
+      return true;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to delete micropost', 500, 'MICROPOST_DELETE_ERROR', { 
+        micropostId: id, 
+        originalError: error.message 
+      });
     }
-
-    microposts.splice(index, 1);
-    this.db.data.microposts = microposts;
-    this.db.write();
-
-    return true;
   }
 
   /**
    * ユーザーIDでマイクロポスト数を取得
    * @param {number} userId - ユーザーID
-   * @returns {number} マイクロポスト数
+   * @returns {Promise<number>} マイクロポスト数
    */
-  countByUserId(userId) {
-    this.db.read();
-    const microposts = this.db.data.microposts || [];
-    return microposts.filter(post => post.userId === parseInt(userId, 10)).length;
+  async countByUserId(userId) {
+    try {
+      const microposts = await this._safeRead();
+      return microposts.filter(post => post.userId === parseInt(userId, 10)).length;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to count microposts by user ID', 500, 'MICROPOST_COUNT_ERROR', { 
+        userId, 
+        originalError: error.message 
+      });
+    }
   }
 
   /**
    * 検索条件でマイクロポストを取得
    * @param {Object} conditions - 検索条件
-   * @returns {Array} マイクロポスト配列
+   * @returns {Promise<Array>} マイクロポスト配列
    */
-  findByConditions(conditions = {}) {
-    this.db.read();
-    let microposts = this.db.data.microposts || [];
+  async findByConditions(conditions = {}) {
+    try {
+      let microposts = await this._safeRead();
 
-    // ユーザーIDフィルタ
-    if (conditions.userId) {
-      microposts = microposts.filter(post => post.userId === parseInt(conditions.userId, 10));
+      // ユーザーIDフィルタ
+      if (conditions.userId) {
+        microposts = microposts.filter(post => post.userId === parseInt(conditions.userId, 10));
+      }
+
+      // コンテンツ検索
+      if (conditions.search) {
+        const searchLower = conditions.search.toLowerCase();
+        microposts = microposts.filter(post => 
+          post.content.toLowerCase().includes(searchLower)
+        );
+      }
+
+      // 日付範囲フィルタ
+      if (conditions.since) {
+        microposts = microposts.filter(post => 
+          new Date(post.createdAt) >= new Date(conditions.since)
+        );
+      }
+
+      if (conditions.until) {
+        microposts = microposts.filter(post => 
+          new Date(post.createdAt) <= new Date(conditions.until)
+        );
+      }
+
+      return microposts;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to find microposts by conditions', 500, 'MICROPOST_SEARCH_ERROR', { 
+        conditions, 
+        originalError: error.message 
+      });
     }
-
-    // コンテンツ検索
-    if (conditions.search) {
-      const searchLower = conditions.search.toLowerCase();
-      microposts = microposts.filter(post => 
-        post.content.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // 日付範囲フィルタ
-    if (conditions.since) {
-      microposts = microposts.filter(post => 
-        new Date(post.createdAt) >= new Date(conditions.since)
-      );
-    }
-
-    if (conditions.until) {
-      microposts = microposts.filter(post => 
-        new Date(post.createdAt) <= new Date(conditions.until)
-      );
-    }
-
-    return microposts;
   }
 
   /**
    * ページネーション付きでマイクロポストを取得
    * @param {Object} options - ページネーションオプション
-   * @returns {Object} ページネーション結果
+   * @returns {Promise<Object>} ページネーション結果
    */
-  findWithPagination(options = {}) {
-    const {
-      page = 1,
-      limit = 10,
-      sortBy = 'createdAt',
-      sortOrder = 'desc',
-      ...conditions
-    } = options;
+  async findWithPagination(options = {}) {
+    try {
+      const {
+        page = 1,
+        limit = 10,
+        sortBy = 'createdAt',
+        sortOrder = 'desc',
+        ...conditions
+      } = options;
 
-    let microposts = this.findByConditions(conditions);
+      let microposts = await this.findByConditions(conditions);
 
-    // ソート
-    microposts.sort((a, b) => {
-      const aVal = a[sortBy];
-      const bVal = b[sortBy];
-      
-      if (sortBy === 'createdAt') {
-        const aDate = new Date(aVal);
-        const bDate = new Date(bVal);
-        return sortOrder === 'desc' ? bDate - aDate : aDate - bDate;
-      }
-      
-      if (typeof aVal === 'string') {
-        return sortOrder === 'desc' ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
-      }
-      
-      return sortOrder === 'desc' ? bVal - aVal : aVal - bVal;
-    });
+      // ソート
+      microposts.sort((a, b) => {
+        const aVal = a[sortBy];
+        const bVal = b[sortBy];
+        
+        if (sortBy === 'createdAt') {
+          const aDate = new Date(aVal);
+          const bDate = new Date(bVal);
+          return sortOrder === 'desc' ? bDate - aDate : aDate - bDate;
+        }
+        
+        if (typeof aVal === 'string') {
+          return sortOrder === 'desc' ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
+        }
+        
+        return sortOrder === 'desc' ? bVal - aVal : aVal - bVal;
+      });
 
-    // ページネーション
-    const total = microposts.length;
-    const totalPages = Math.ceil(total / limit);
-    const offset = (page - 1) * limit;
-    const paginatedMicroposts = microposts.slice(offset, offset + limit);
+      // ページネーション
+      const total = microposts.length;
+      const totalPages = Math.ceil(total / limit);
+      const offset = (page - 1) * limit;
+      const paginatedMicroposts = microposts.slice(offset, offset + limit);
 
-    return {
-      data: paginatedMicroposts,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages
-      }
-    };
+      return {
+        data: paginatedMicroposts,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages
+        }
+      };
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      throw new AppError('Failed to paginate microposts', 500, 'MICROPOST_PAGINATION_ERROR', { 
+        options, 
+        originalError: error.message 
+      });
+    }
   }
 }
 

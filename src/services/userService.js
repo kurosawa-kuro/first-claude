@@ -1,39 +1,66 @@
-import { Low } from 'lowdb';
-import { JSONFile } from 'lowdb/node';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import micropostRepository from '../repositories/micropostRepository.js';
+import { UserRepository } from '../repositories/userRepository.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+/**
+ * User Service
+ * ユーザーのビジネスロジック層
+ * UserRepositoryを使用した統一的なデータアクセス
+ */
 
-// Initialize lowdb
-const dbFile = path.join(__dirname, '../../db/db.json');
-const adapter = new JSONFile(dbFile);
-const db = new Low(adapter, { users: [], microposts: [] });
+// UserRepositoryインスタンス
+const userRepository = new UserRepository();
 
-// Read data from JSON file
-await db.read();
-
-export const getUsersFromDB = async () => {
-  await db.read();
-  return db.data.users || [];
+/**
+ * 全ユーザー取得
+ * @param {Object} options - 検索オプション
+ * @returns {Promise<Object>} ユーザー一覧と総数
+ */
+export const getUsersFromDB = async (options = {}) => {
+  const result = await userRepository.findAll(options);
+  return result.users; // 従来との互換性のためusersプロパティを返す
 };
 
+/**
+ * IDでユーザー取得
+ * @param {number} id - ユーザーID
+ * @returns {Promise<Object|null>} ユーザー情報またはnull
+ */
 export const getUserByIdFromDB = async (id) => {
-  await db.read();
-  return db.data.users.find(user => user.id === id);
+  return await userRepository.findById(id);
 };
 
+/**
+ * ユーザー作成
+ * @param {Object} userData - ユーザーデータ
+ * @returns {Promise<Object>} 作成されたユーザー
+ */
 export const createUserInDB = async (userData) => {
-  await db.read();
-  const newUser = {
-    id: Math.max(...db.data.users.map(u => u.id), 0) + 1,
-    ...userData,
-    createdAt: new Date().toISOString()
-  };
-  
-  db.data.users.push(newUser);
-  await db.write();
-  return newUser;
+  return await userRepository.create(userData);
+};
+
+/**
+ * メールアドレスでユーザー検索
+ * @param {string} email - メールアドレス
+ * @returns {Promise<Object|null>} ユーザー情報またはnull
+ */
+export const getUserByEmail = async (email) => {
+  return await userRepository.findByEmail(email);
+};
+
+/**
+ * ユーザー更新
+ * @param {number} id - ユーザーID
+ * @param {Object} updateData - 更新データ
+ * @returns {Promise<Object|null>} 更新されたユーザーまたはnull
+ */
+export const updateUser = async (id, updateData) => {
+  return await userRepository.update(id, updateData);
+};
+
+/**
+ * ユーザー削除
+ * @param {number} id - ユーザーID
+ * @returns {Promise<boolean>} 削除成功の可否
+ */
+export const deleteUser = async (id) => {
+  return await userRepository.delete(id);
 };
